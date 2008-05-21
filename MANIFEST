@@ -1,4 +1,5 @@
-.cvsignore
+.shipit
+.hgignore
 Build.PL
 Changes
 lib/Net/FriendFeed.pm
@@ -11,3 +12,5 @@ t/02-publish.t
 t/boilerplate.t
 t/pod-coverage.t
 t/pod.t
+Makefile.PL
+META.yml

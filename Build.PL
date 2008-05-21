@@ -4,7 +4,7 @@ use Module::Build;
 
 my $builder = Module::Build->new(
     module_name         => 'Net::FriendFeed',
-    license             => 'GPLv3',
+    license             => 'gpl',
     dist_author         => 'Alex Kapranoff <kappa@cpan.org>',
     dist_version_from   => 'lib/Net/FriendFeed.pm',
     build_requires => {
