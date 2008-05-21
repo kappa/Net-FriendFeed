@@ -1,0 +1,13 @@
+.cvsignore
+Build.PL
+Changes
+lib/Net/FriendFeed.pm
+MANIFEST
+README
+scripts/share.pl
+t/00-load.t
+t/01-new.t
+t/02-publish.t
+t/boilerplate.t
+t/pod-coverage.t
+t/pod.t
