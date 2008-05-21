@@ -1,5 +1,6 @@
 Revision history for Net-FriendFeed
 
-0.01    Date/time
-        First version, released on an unsuspecting world.
+0.1    Wed May 21 13:46:30 MSD 2008
+       First version, released on an unsuspecting world.
+       Support publish_message & publish_link methods.
 
