@@ -327,18 +327,57 @@ curl -u "nickname:remotekey" -d "title=Testing+the+FriendFeed+API&link=http://fr
 
 =head2 publish_link
 
-Share a link with a title and images.
+Share a link with a title, images and other possible options.
+Requires authentication.
 
-=cut.
+Full signature looks like: 
+    $frf->publish_link($title, $link, $comment, [@images, [$imgN, $linkN]], $room, $via)
+
+=over
+
+=item $title
+
+Mandatory title of the shared item.
+
+=item $links
+
+URL to refer to. If absent, the shared link reduces to text.
+
+=item $comment
+
+Automatically add 1st comment to the item.
+
+=item $images
+
+This one is an arrayref of either image URLs or pairs (taken as
+arrayrefs of two elements) or URL1 => URL2. URL1 in the pair points to
+the image and URL2 is used as a href to follow when the user clicks on
+this very image. URL2 defaults to the main $link.
+
+=item $room
+
+This is a room nickname to which the link should be published.
+
+=item $via
+
+This is an identifier of your software. It's ignored unless you
+register it with FriendFeed administration.
+
+=back
+
+=cut
 
 sub publish_link {
     my $self = shift;
-    my ($msg, $link, $imgs) = @_;
+    my ($msg, $link, $comment, $imgs, $room, $via) = @_;
 
     my @args = ();
 
     push @args, title => $msg;
     push @args, 'link' => $link if defined $link;
+    push @args, 'comment' => $comment if defined $comment;
+    push @args, 'room' => $room if defined $room;
+    push @args, 'via' => $via if defined $via;
 
     if ($imgs && ref $imgs eq 'ARRAY') {
         push @args, (
@@ -356,6 +395,8 @@ sub publish_link {
 
 Share a piece of text. The simplest form of FriendFeed sharing.
 Requires authentication.
+
+This is actually a special case of publish_link with only $title set.
 
 =cut
 
