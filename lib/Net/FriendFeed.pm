@@ -5,17 +5,13 @@ use strict;
 
 =head1 NAME
 
-Net::FriendFeed - The great new Net::FriendFeed!
-
-=head1 VERSION
-
-Version 0.01
+Net::FriendFeed - Perl interface to FriendFeed.com API
 
 =cut
 
 our $VERSION = '0.1';
 
-use JSON::Any;
+#use JSON::Any;
 use LWP::UserAgent;
 use HTTP::Request::Common;
 use MIME::Base64 qw/encode_base64/;
@@ -27,13 +23,15 @@ our $Api_EntryPoint = 'http://friendfeed.com/api/';
 
 =head1 SYNOPSIS
 
-Quick summary of what the module does.
+FriendFeed is a social feed agregator with a clean public REST-based
+API. This package allows easy access to FriendFeed from Perl.
 
-Perhaps a little code snippet.
+Methods are named in accordance with the official Python package.
 
     use Net::FriendFeed;
 
-    my $foo = Net::FriendFeed->new();
+    my $frf = Net::FriendFeed->new();
+    $frf->publish_message('Hello, world!');
     ...
 
 =cut
@@ -42,21 +40,18 @@ Perhaps a little code snippet.
 
 =head2 new
 
-This is a constructor for FriendFeed object. It will also take auth
-creds as parameters.
+This is a constructor for FriendFeed object. It takes an optional
+hashref parameter with auth credentials.
 
+Example:
+    my $frf = Net::FriendFeed->new({login => 'kkapp', remotekey => 'hfytr38'});
 
-sub new {
-    my $class = shift;
+The remotekey is a kind of easily regeneratable password used
+only in API functions. A user can get his remotekey here:
+http://friendfeed.com/remotekey
 
-    my $self = {};
+Authentication is needed only to post or to read private feeds.
 
-    bless $self, ref $class || $class;
-
-    $self->_init(@_) if @_;
-
-    return $self;
-}
 =cut
 
 sub _connect {
@@ -100,14 +95,6 @@ sub _post {
 }
 
 =head1 FF API doc
-
-FriendFeed API Documentation
-Introduction
-
-The FriendFeed API enables developers interact with the FriendFeed web site programmatically via simple HTTP requests.
-
-Core Concepts
-Requests and Data Formats
 
 All requests to the FriendFeed API are simple HTTP GET and POST requests. For example, you can fetch the JSON version of the most recent 30 public entries published to FriendFeed by fetching http://friendfeed.com/api/feed/public.
 
@@ -462,7 +449,6 @@ The returned JSON has the form:
           o nickname
           o profileUrl 
 
-
 =cut
 
 =head1 AUTHOR
@@ -474,8 +460,6 @@ Alex Kapranoff, C<< <kappa at cpan.org> >>
 Please report any bugs or feature requests to C<bug-net-friendfeed at rt.cpan.org>, or through
 the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Net-FriendFeed>.  I will be notified, and then you'll
 automatically be notified of progress on your bug as I make changes.
-
-
 
 
 =head1 SUPPORT
