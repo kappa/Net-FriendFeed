@@ -9,6 +9,13 @@ my $builder = Module::Build->new(
     dist_version_from   => 'lib/Net/FriendFeed.pm',
     build_requires => {
         'Test::More' => 0,
+        'Test::MockObject' => 0,
+    },
+    requires => {
+        'LWP::UserAgent' => 0,
+        'HTTP::Request::Common' => 0,
+        'MIME::Base64' => 0,
+        'Class::Accessor' => 0,
     },
     add_to_cleanup      => [ 'Net-FriendFeed-*' ],
     create_makefile_pl => 'traditional',
