@@ -14,7 +14,7 @@ use Test::HTTP;
 
 use Net::FriendFeed;
 
-our $API_EP = $Net::FriendFeed::Api_EntryPoint = 'http://kapranoff.ru/api/';
+our $API_EP = $Net::FriendFeed::API_ENTRYPOINT = 'http://kapranoff.ru/api/';
 
 my $frf = new Net::FriendFeed;
 
