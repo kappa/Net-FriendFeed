@@ -82,9 +82,9 @@ ok(
 http_cmp(sub { $frf->publish_link('Look here:', 'http://r0.ru', undef, undef, 'Dining Room') },
     [
         as_string => re('room=Dining\+Room'),
-        as_string => re('(?!image)'),
+        as_string => code(sub { $_[0] !~ 'image' }),
     ]
-), 'ok publish_link to room');
+), 'ok publish_link to room and old args are not kept');
 
 ok(
 http_cmp(sub { $frf->publish_link('Look here:', 'http://r0.ru', undef, undef, 'Dining Room', 'Perl!') },
