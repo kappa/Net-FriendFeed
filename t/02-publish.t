@@ -2,6 +2,10 @@
 
 use warnings;
 use strict;
+use utf8;   # strings in Russian present
+
+use Encode;
+use URI::Escape qw/uri_escape_utf8/;
 
 use Test::More qw/no_plan/;
 use Test::NoWarnings;
@@ -89,4 +93,11 @@ http_cmp(sub { $frf->publish_link('Look here:', 'http://r0.ru', undef, undef, 'D
         as_string => re('via=Perl!'),
     ]
 ), 'ok publish_link to room and via');
+
+ok(
+http_cmp(sub { $frf->publish_message('Рамблер ftw!') },
+    [
+        as_string => re('title=' . uri_escape_utf8('Рамблер') . '\+ftw!'),
+    ]
+), 'publish non-ASCII data');
 

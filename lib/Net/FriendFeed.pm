@@ -330,6 +330,10 @@ curl -u "nickname:remotekey" -d "title=Testing+the+FriendFeed+API&link=http://fr
 Share a link with a title, images and other possible options.
 Requires authentication.
 
+All non-ASCII input data should be clean Perl Unicode (that is, decoded from
+any encoding). FriendFeed API is strictly UTF-8 so we unconditionally
+encode strings into UTF-8 via Encode::encode('UTF-8', $data) call.
+
 Full signature looks like: 
     $frf->publish_link($title, $link, $comment, [@images, [$imgN, $linkN]], $room, $via)
 
@@ -373,11 +377,11 @@ sub publish_link {
 
     my @args = ();
 
-    push @args, title => $msg;
+    push @args, title => Encode::encode('UTF-8', $msg);
     push @args, 'link' => $link if defined $link;
-    push @args, 'comment' => $comment if defined $comment;
-    push @args, 'room' => $room if defined $room;
-    push @args, 'via' => $via if defined $via;
+    push @args, comment => Encode::encode('UTF-8', $comment) if defined $comment;
+    push @args, room => $room if defined $room;
+    push @args, via => $via if defined $via;
 
     if ($imgs && ref $imgs eq 'ARRAY') {
         push @args, (
