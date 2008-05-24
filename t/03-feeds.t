@@ -42,14 +42,20 @@ http_cmp(sub { $frf->fetch_public_feed() },
     ]
 ), 'public feed');
 
+ok($frf->return_feeds_as('xml'), 'set return_feeds_as');
+is($frf->return_feeds_as, 'xml', 'return_feeds_as set ok');
+
 ok(
 http_cmp(sub { $frf->fetch_user_feed('kkapp') },
     [
         uri => methods(
             path => re('feed/user/kkapp$'),
+            ['query_param', 'format'] => 'xml',
         ),
     ]
 ), 'user feed');
+
+$frf->return_feeds_as('structure');
 
 ok(
 http_cmp(sub { $frf->fetch_user_comments_feed('kkapp') },
