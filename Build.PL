@@ -8,14 +8,15 @@ my $builder = Module::Build->new(
     dist_author         => 'Alex Kapranoff <kappa@cpan.org>',
     dist_version_from   => 'lib/Net/FriendFeed.pm',
     build_requires => {
-        'Test::More' => 0,
         'Test::MockObject' => 0,
     },
     requires => {
+        'perl' => '5.8.2',
         'LWP::UserAgent' => 0,
         'HTTP::Request::Common' => 0,
-        'MIME::Base64' => 0,
         'Class::Accessor' => 0,
+        'URI' => 0,
+        'JSON' => 2.0,
     },
     add_to_cleanup      => [ 'Net-FriendFeed-*' ],
     create_makefile_pl => 'traditional',
