@@ -4,3 +4,9 @@ Revision history for Net-FriendFeed
        First version, released on an unsuspecting world.
        Support publish_message & publish_link methods.
 
+0.5    Sun May 25 00:10:43 MSD 2008
+       Second release, implements full API with some exceptions:
+	* Feeds are not parsed;
+	* publish_link does not return anything useful;
+	* publish_link does not support uploading images directly to
+	  FriendFeed.
