@@ -9,7 +9,7 @@ Net::FriendFeed - Perl interface to FriendFeed.com API
 
 =cut
 
-our $VERSION = '0.1';
+our $VERSION = '0.2';
 
 #use JSON::Any;
 use LWP::UserAgent;
@@ -17,7 +17,7 @@ use HTTP::Request::Common;
 use MIME::Base64 qw/encode_base64/;
 
 use base qw(Class::Accessor);
-Net::FriendFeed->mk_accessors(qw/login remotekey ua/);
+Net::FriendFeed->mk_accessors(qw/login remotekey ua return_feeds_as/);
 
 our $Api_EntryPoint = 'http://friendfeed.com/api/';
 
@@ -54,6 +54,20 @@ Authentication is needed only to post or to read private feeds.
 
 =cut
 
+sub new {
+    my($proto, $fields) = @_;
+    my($class) = ref $proto || $proto;
+
+    $fields = {} unless defined $fields;
+
+    my $self = {%$fields};
+
+    $self->{return_feeds_as} ||= 'structure';
+
+    # make a copy of $fields.
+    bless $self, $class;
+}
+
 sub _connect {
     my $self = shift;
 
@@ -76,6 +90,36 @@ sub _api_url {
     return $Api_EntryPoint . $uri;
 }
 
+sub _fetch_feed {
+    my $self = shift;
+    my $uri = shift;
+    my @args = @_;
+
+    $self->_connect();
+
+    my ($needs_parsing, $format) = ($self->return_feeds_as eq 'structure', $self->return_feeds_as);
+    $format = 'json' if $needs_parsing;
+
+    my $get_uri = URI->new($self->_api_url($uri));
+    $get_uri->query_form(format => $format);
+    $get_uri->query_form(@args) if @args;
+
+    my $req = GET $get_uri->as_string;
+
+    if ($self->login && $self->remotekey) {
+        $req->header(Authorization => 'Basic ' . encode_base64($self->login . ':' . $self->remotekey, q{}));
+    }
+
+    if ($needs_parsing) {
+        my $rv = $self->ua->request($req);
+        # do some JSON magic
+        return 'JSON';
+    }
+    else {
+        $self->ua->request($req);
+    }
+}
+
 sub _post {
     my $self = shift;
     my $uri = shift;
@@ -84,7 +128,6 @@ sub _post {
 
     my $req = POST
         $self->_api_url($uri),
-#        [via => 'Net::FriendFeed', @{shift()}];
         shift();
 
     if ($self->login && $self->remotekey) {
@@ -94,43 +137,11 @@ sub _post {
     $self->ua->request($req);
 }
 
-=head1 FF API doc
+=head1 Feeds
 
-All requests to the FriendFeed API are simple HTTP GET and POST requests. For example, you can fetch the JSON version of the most recent 30 public entries published to FriendFeed by fetching http://friendfeed.com/api/feed/public.
+A number of methods fetch different feeds from FriendFeed.
 
-All of the API requests that output feeds are available in four formats: JSON, a simple form of XML, RSS 2.0, and Atom 1.0. JSON is the default output format. To request a different output format, simply add an format= argument to the URL:
-
-    * http://friendfeed.com/api/feed/public?format=json
-    * http://friendfeed.com/api/feed/public?format=xml
-    * http://friendfeed.com/api/feed/public?format=rss
-    * http://friendfeed.com/api/feed/public?format=atom 
-
-The other API requests, like posting a new comment on an entry, only support the JSON and XML output formats since they do not output feed-oriented data.
-Authentication
-
-If you are publishing data to FriendFeed or if you are requesting the feed that includes data from a user with a private feed, your HTTP requests must be authenticated.
-
-All FriendFeed users have a Remote Key to provide third party applications access to their FriendFeed. A FriendFeed Remote Key is just like a password, except that it is only used for third party applications, so it only provides access to the functionality defined by the API. Users can easily reset it if a third party application abuses the API.
-
-All requests that require authentication use HTTP Basic Authentication. The username should be the user's nickname, and the password should be the user's Remote Key. You can direct user's to http://friendfeed.com/remotekey to get their remote key if they have not memorized it. See the FriendFeed API Application Guidelines for a complete set of recommendations of how to present authentication in your application.
-
-The Python and PHP libraries available at http://code.google.com/p/friendfeed-api/ implement authentication for all methods that require it.
-
-Note: We are currently exploring adding OAuth support as well. If you are interested in this support, let us know in the FriendFeed developer forum.
-JSON Callbacks
-
-The JSON output format supports an additional argument callback= that wraps the JSON output in a function call to a function of your choice. This functionality is available to enable you to use the API with JavaScript within a web browser. For example, http://friendfeed.com/api/feed/public?callback=foo outputs:
-
-foo({"entries":[...]})
-
-Using JSON and callbacks, you can place the FriendFeed API request inside a <script> tag, and operate on the results with a function elsewhere in the JavaScript code on the page.
-
-All authentication is ignored if the callback= argument is given, so JSON callbacks only work with public feeds.
-Reading FriendFeed Feeds
-Overview
-Feed Formats
-
-The JSON form of the feeds has the following structure:
+The feeds have the following structure:
 
     * entries[]
           o id - the FriendFeed entry UUID, used to add comments/likes to the entry
@@ -178,111 +189,168 @@ The simple XML format (output=xml) has the same structure as the JSON. The RSS a
 Dates in JSON and dates in the FriendFeed extension elements in the Atom and RSS feeds are in RFC 3339 format in UTC. You can parse them with the strptime string "%Y-%m-%dT%H:%M:%SZ".
 Filtering & Paging
 
-All of the feed methods below support the following additional arguments:
+=cut
 
-    * service - only return entries from the service with the given ID, e.g., service=twitter
-    * start - return entries starting with the given index, e.g., start=30
-    * num - return num entries starting from start, e.g., num=10 
+=head2 return_feeds_as
 
-Methods
-/api/feed/public - Fetch all Public Entries
+Gets or sets the type of return feeds.
 
-Returns the most recent public entries on FriendFeed:
+This can be one of qw/structure xml atom rss json/ and defaults to
+'structure' which is a parsed Perl data structure. Other types are
+string scalars.
 
-http://friendfeed.com/api/feed/public
+=cut
 
-Using the FriendFeed Python library:
+=head2 fetch_public_feed
 
-service = friendfeed.FriendFeed()
-feed = service.fetch_public_feed()
-for entry in feed["entries"]:
-    print entry["title"]
+Fetches the most recent 30 public entries published to FriendFeed.
 
-/api/feed/user/NICKNAME - Fetch Entries from a User
+This feed and all the other feed-fetching methods support additional
+parameters:
 
-Returns the most recent entries from the user with the given nickname:
+=over
 
-http://friendfeed.com/api/feed/user/bret
+=item service
 
+only return entries from the service with the given ID, e.g., service=twitter
+
+=item start
+
+return entries starting with the given index, e.g., start=30
+
+=item num
+
+return num entries starting from start, e.g., num=10 
+
+=back
+
+=cut
+
+sub fetch_public_feed {
+    my $self = shift;
+
+    $self->_fetch_feed('feed/public', @_);
+}
+
+=head2 fetch_user_feed
+
+Fetches the most recent entries from a user feed.
 If the user has a private feed, authentication is required.
 
-Using the FriendFeed Python library:
+=cut
 
-service = friendfeed.FriendFeed()
-feed = service.fetch_user_feed("bret")
-for entry in feed["entries"]:
-    print entry["title"]
+sub fetch_user_feed {
+    my $self = shift;
+    my $user = shift;
 
-/api/feed/user/NICKNAME/comments - Fetch Entries a User Has Commented On
+    $self->_fetch_feed("feed/user/$user", @_);
+}
 
-Returns the most recent entries the user has commented on, ordered by the date of that user's comments:
+=head2 fetch_user_comments_feed
 
-http://friendfeed.com/api/feed/user/bret/comments
+Returns the most recent entries the user has commented on, ordered by the date of that user's comments. 
 
-If the user has a private feed, authentication is required.
-/api/feed/user/NICKNAME/likes - Fetch Entries a User Has "Liked"
+=cut
 
-Returns the most recent entries the user has "liked," ordered by the date of that user's "likes":
+sub fetch_user_comments_feed {
+    my $self = shift;
+    my $user = shift;
 
-http://friendfeed.com/api/feed/user/bret/likes
+    $self->_fetch_feed("feed/user/$user/comments", @_);
+}
 
-If the user has a private feed, authentication is required.
-/api/feed/user/NICKNAME/discussion - Fetch Entries a User Has Commented On or "Liked"
+=head2 fetch_user_likes_feed
 
-Returns the most recent entries the user has commented on or "liked":
+Returns the most recent entries the user has "liked," ordered by the date of that user's "likes".
 
-http://friendfeed.com/api/feed/user/bret/discussion
+=cut
 
-If the user has a private feed, authentication is required.
-/api/feed/user - Fetch Entries from Multiple Users
+sub fetch_user_likes_feed {
+    my $self = shift;
+    my $user = shift;
+
+    $self->_fetch_feed("feed/user/$user/likes", @_);
+}
+
+=head2 fetch_user_discussion_feed
+
+Returns the most recent entries the user has commented on or "liked".
+
+=cut
+
+sub fetch_user_discussion_feed {
+    my $self = shift;
+    my $user = shift;
+
+    $self->_fetch_feed("feed/user/$user/discussion", @_);
+}
+
+=head2 fetch_multi_user_feed
 
 Returns the most recent entries from a list of users, specified by nickname:
 
-http://friendfeed.com/api/feed/user?nickname=bret,paul,jim
+If more than one nickname is specified, the feed most recent entries
+from all of the given users. If any one of the users has a private
+feed, authentication is required.
 
-If more than one nickname is specified, the feed most recent entries from all of the given users. If any one of the users has a private feed, authentication is required.
+User nicknames should be passed as an arrayref.
 
-Using the FriendFeed Python library:
+    $frf->fetch_multi_user_feed([qw/kkapp mihun/]);
 
-service = friendfeed.FriendFeed()
-feed = service.fetch_multi_user_feed(["bret", "jim", "paul"])
-for entry in feed["entries"]:
-    print entry["title"]
+=cut
 
-/api/feed/home - Fetch the Friends Feed
+sub fetch_multi_user_feed {
+    my $self = shift;
+    my $users = shift;
 
-Returns the entries the authenticated user would see on their FriendFeed homepage - all of their subscriptions and friend-of-a-friend entries:
+    $self->_fetch_feed("feed/user", nickname => join(',', @$users), @_);
+}
 
-http://friendfeed.com/api/feed/home
+=head2 fetch_home_feed
+
+Returns the entries the authenticated user would see on their FriendFeed homepage - all of their subscriptions and friend-of-a-friend entries.
 
 Authentication is always required.
 
-Using the FriendFeed Python library:
+=cut
 
-service = friendfeed.FriendFeed(nickname, remote_key)
-feed = service.fetch_home_feed()
-for entry in feed["entries"]:
-    print entry["title"]
+sub fetch_home_feed {
+    my $self = shift;
+    my $user = shift;
 
-/api/feed/search - Search
+    $self->_need_auth and
+        $self->_fetch_feed("feed/home", @_);
+}
 
-Executes a search over the entries in FriendFeed. If the request is authenticated, the default scope is over all of the entries in the authenticated user's Friends Feed. If the request is not authenticated, the default scope is over all public entries.
+=head2 search
 
-http://friendfeed.com/api/feed/search?q=friendfeed
+Executes a search over the entries in FriendFeed. If the request is
+authenticated, the default scope is over all of the entries in the
+authenticated user's Friends Feed. If the request is not
+authenticated, the default scope is over all public entries.
 
 The query syntax is the same syntax as http://friendfeed.com/search/advanced. The query operators are:
 
-    * who: -restricts the search to a specific user, e.g., who:bret
-    * service: restricts the search to a specific service ID, e.g., service:twitter 
+=over
 
-Using the FriendFeed Python library:
+=item who:
 
-service = friendfeed.FriendFeed()
-feed = service.search("who:bret friendfeed")
-for entry in feed["entries"]:
-    print entry["title"]
+restricts the search to a specific user, e.g., who:bret
+
+=item service:
+
+restricts the search to a specific service ID, e.g., service:twitter 
+
+=back
 
 =cut
+
+sub search {
+    my $self = shift;
+    my $q = shift;
+
+    $self->_fetch_feed("feed/search", q => Encode::encode('UTF-8', $q), @_);
+}
 
 =head1 Publishing To FriendFeed
 
