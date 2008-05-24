@@ -48,7 +48,7 @@ Example:
 
 The remotekey is a kind of easily regeneratable password used
 only in API functions. A user can get his remotekey here:
-http://friendfeed.com/remotekey
+L<http://friendfeed.com/remotekey>
 
 Authentication is needed only to post or to read private feeds.
 
@@ -137,7 +137,7 @@ sub _post {
     $self->ua->request($req);
 }
 
-=head1 Feeds
+=head1 FEED FUNCTIONS
 
 A number of methods fetch different feeds from FriendFeed.
 
@@ -189,24 +189,7 @@ The simple XML format (output=xml) has the same structure as the JSON. The RSS a
 Dates in JSON and dates in the FriendFeed extension elements in the Atom and RSS feeds are in RFC 3339 format in UTC. You can parse them with the strptime string "%Y-%m-%dT%H:%M:%SZ".
 Filtering & Paging
 
-=cut
-
-=head2 return_feeds_as
-
-Gets or sets the type of return feeds.
-
-This can be one of qw/structure xml atom rss json/ and defaults to
-'structure' which is a parsed Perl data structure. Other types are
-string scalars.
-
-=cut
-
-=head2 fetch_public_feed
-
-Fetches the most recent 30 public entries published to FriendFeed.
-
-This feed and all the other feed-fetching methods support additional
-parameters:
+All feed-fetching methods support additional parameters:
 
 =over
 
@@ -223,6 +206,26 @@ return entries starting with the given index, e.g., start=30
 return num entries starting from start, e.g., num=10 
 
 =back
+
+They can be passed as key => value pairs after all the other arguments.
+
+    $frf->fetch_user_feed('kkapp', num => 50, service => 'twitter');
+
+=cut
+
+=head2 return_feeds_as
+
+Gets or sets the type of return feeds.
+
+This can be one of C<qw/structure xml atom rss json/> and defaults to
+C<'structure'> which is a parsed Perl data structure. Other types are
+string scalars.
+
+=cut
+
+=head2 fetch_public_feed
+
+Fetches the most recent 30 public entries published to FriendFeed.
 
 =cut
 
@@ -329,6 +332,8 @@ authenticated, the default scope is over all of the entries in the
 authenticated user's Friends Feed. If the request is not
 authenticated, the default scope is over all public entries.
 
+    $frf->search('rambler service:twitter');
+
 The query syntax is the same syntax as http://friendfeed.com/search/advanced. The query operators are:
 
 =over
@@ -354,42 +359,15 @@ sub search {
 
 =head1 Publishing To FriendFeed
 
-All of the calls to publish information to FriendFeed are HTTP requests. You can perform test calls from a web browser using the HTTP Basic Authentication built into your browser at http://friendfeed.com/static/html/apitest.html.
+You can perform test calls from a web browser using the HTTP Basic
+Authentication built into your browser at
+L<http://friendfeed.com/static/html/apitest.html>.
 
-Requests to FriendFeed are rate limited, which, e.g., limits the number and size of thumbnails you can upload in a day. Normal uses should fall well within our rate limits. If you encounter HTTP 403 errors because of rate limits, and you think the limit is erroneous, please let us know in the developer forum.
-Create New Entries
-/api/share - Publish Links or Messages
-
-A POST request to /api/share will publish a new entry on the authenticated user's feed. The arguments are:
-
-    * title - required - The text of the new entry.
-    * link - The URL of the new entry. If it is not specified, the new entry will look like a quoted message. If specified, it will look like a link.
-    * comment - If specified, the given text is posted as a comment under the new entry.
-    * imageN_url, imageN_link - The thumbnail images for the entry, specified from a 0-based index. image0_url specifies the URL of the image, which will be resized to the maximum size of a thumbnail and stored on FriendFeed's servers. If image0_link is not given, the thumbnail will link to the main link URL. If it is specified, the thumbnail will link to the specified image0_link. 
-
-Example usage with the FriendFeed Python library:
-
-service = friendfeed.FriendFeed(nickname, remote_key)
-
-# Publish a text message
-service.publish_message("Testing the FriendFeed API")
-
-# Publish a link
-service.publish_link("Testing the FriendFeed API", "http://friendfeed.com/api/")
-
-# Publish a link with thumbnail images
-service.publish_link(
-    title="Testing the FriendFeed API",
-    link="http://friendfeed.com/api/",
-    image_urls=[
-        "http://friendfeed.com/static/images/jim-superman.jpg",
-        "http://friendfeed.com/static/images/logo.png",
-    ],
-)
-
-Example usage with curl:
-
-curl -u "nickname:remotekey" -d "title=Testing+the+FriendFeed+API&link=http://friendfeed.com/" http://friendfeed.com/api/share
+Requests to FriendFeed are rate limited, which, e.g., limits the
+number and size of thumbnails you can upload in a day. Normal uses
+should fall well within our rate limits. If you encounter HTTP 403
+errors because of rate limits, and you think the limit is erroneous,
+please let us know in the developer forum.
 
 =cut
 
