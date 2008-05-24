@@ -37,14 +37,15 @@ Methods are named in accordance with the official Python package.
 
 =cut
 
-=head1 FUNCTIONS
+=head1 GENERAL FUNCTIONS
 
-=head2 new
+=head2 new(\%opts)
 
 This is a constructor for FriendFeed object. It takes an optional
 hashref parameter with auth credentials.
 
 Example:
+    my $frf_anon = Net::FriendFeed->new;
     my $frf = Net::FriendFeed->new({login => 'kkapp', remotekey => 'hfytr38'});
 
 The remotekey is a kind of easily regeneratable password used
@@ -220,7 +221,7 @@ They can be passed as key => value pairs after all the other arguments.
 
 =cut
 
-=head2 return_feeds_as
+=head2 return_feeds_as($type)
 
 Gets or sets the type of return feeds.
 
@@ -242,7 +243,7 @@ sub fetch_public_feed {
     $self->_fetch_feed('feed/public', @_);
 }
 
-=head2 fetch_user_feed
+=head2 fetch_user_feed($user)
 
 Fetches the most recent entries from a user feed.
 If the user has a private feed, authentication is required.
@@ -256,7 +257,7 @@ sub fetch_user_feed {
     $self->_fetch_feed("feed/user/$user", @_);
 }
 
-=head2 fetch_user_comments_feed
+=head2 fetch_user_comments_feed($user)
 
 Returns the most recent entries the user has commented on, ordered by the date of that user's comments. 
 
@@ -269,7 +270,7 @@ sub fetch_user_comments_feed {
     $self->_fetch_feed("feed/user/$user/comments", @_);
 }
 
-=head2 fetch_user_likes_feed
+=head2 fetch_user_likes_feed($user)
 
 Returns the most recent entries the user has "liked," ordered by the date of that user's "likes".
 
@@ -282,7 +283,7 @@ sub fetch_user_likes_feed {
     $self->_fetch_feed("feed/user/$user/likes", @_);
 }
 
-=head2 fetch_user_discussion_feed
+=head2 fetch_user_discussion_feed($user)
 
 Returns the most recent entries the user has commented on or "liked".
 
@@ -295,7 +296,7 @@ sub fetch_user_discussion_feed {
     $self->_fetch_feed("feed/user/$user/discussion", @_);
 }
 
-=head2 fetch_multi_user_feed
+=head2 fetch_multi_user_feed(\@users)
 
 Returns the most recent entries from a list of users, specified by nickname:
 
@@ -316,7 +317,7 @@ sub fetch_multi_user_feed {
     $self->_fetch_feed("feed/user", nickname => join(',', @$users), @_);
 }
 
-=head2 fetch_room_feed
+=head2 fetch_room_feed($room)
 
 Returns the most recent entries in the room with the given nickname.
 
@@ -346,7 +347,7 @@ sub fetch_home_feed {
         $self->_fetch_feed("feed/home", @_);
 }
 
-=head2 search
+=head2 search($query)
 
 Executes a search over the entries in FriendFeed. If the request is
 authenticated, the default scope is over all of the entries in the
@@ -378,7 +379,7 @@ sub search {
     $self->_fetch_feed("feed/search", q => Encode::encode('UTF-8', $q), @_);
 }
 
-=head1 Publishing To FriendFeed
+=head1 PUBLISHING FUNCTIONS
 
 You can perform test calls from a web browser using the HTTP Basic
 Authentication built into your browser at
@@ -392,7 +393,7 @@ please let us know in the developer forum.
 
 =cut
 
-=head2 publish_link
+=head2 publish_link($title, $link, $comment, [@images, [$imgN, $linkN]], $room, $via)
 
 Share a link with a title, images and other possible options.
 Requires authentication.
@@ -462,7 +463,7 @@ sub publish_link {
         $self->_post('share', \@args);
 }
 
-=head2 publish_message
+=head2 publish_message($msg)
 
 Share a piece of text. The simplest form of FriendFeed sharing.
 Requires authentication.
@@ -488,7 +489,7 @@ By default, the thumbnails will link to the destination link for the entry. If y
 
 =cut 
 
-=head1 Comment and Like Entries
+=head1 COMMENT AND LIKE FUNCTIONS
 
 =head2 add_comment($entry, $body)
 
@@ -669,7 +670,7 @@ sub delete_like {
         $self->_post('like/delete', [entry => $entry]);
 }
 
-=head1 Get User Profile Information
+=head1 PROFILE FUNCTIONS
 
 =head2 fetch_user_profile($user)
 
