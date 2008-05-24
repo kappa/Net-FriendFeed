@@ -27,8 +27,7 @@ is($frf->return_feeds_as(), 'structure', 'default return_feeds_as');
 
 can_ok($frf, qw/fetch_public_feed fetch_user_feed
 fetch_user_comments_feed fetch_user_likes_feed
-fetch_user_discussion_feed fetch_multi_user_feed fetch_home_feed
-search/);
+fetch_user_discussion_feed fetch_multi_user_feed fetch_home_feed search fetch_room_feed/);
 
 ok(
 http_cmp(sub { $frf->fetch_public_feed() },
@@ -118,3 +117,12 @@ http_cmp(sub { $frf->search('rambler service:twitter') },
         ),
     ]
 ), 'search feed');
+
+ok(
+http_cmp(sub { $frf->fetch_room_feed('ru-friendfeed') },
+    [
+        uri => methods(
+            path => re('feed/room/ru-friendfeed$'),
+        ),
+    ]
+), 'room feed');

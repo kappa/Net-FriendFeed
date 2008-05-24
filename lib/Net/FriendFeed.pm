@@ -154,35 +154,41 @@ The feeds have the following structure:
                 + id - the user's FriendFeed UUID
                 + name - the user's full name
                 + nickname - the user's FriendFeed nickname, used in FriendFeed URLs
-                + profileUrl - the user's profile URL on FriendFeed 
+                + profileUrl - the user's profile URL on FriendFeed
           o service{} - the service from which the entry came
                 + id - the service's FriendFeed ID, e.g., "picasa"
                 + name - the service's official name, e.g., "Picasa Web Albums"
                 + iconUrl - the URL of the favicon for this service
-                + profileUrl - the user's profile URL on this service 
+                + profileUrl - the user's profile URL on this service
           o comments[]
                 + date
                 + id - the UUID of the comment
                 + user{} - same structure as the user{} structure above
-                + body - the textual body of the comment 
+                + body - the textual body of the comment
           o likes[]
                 + date
-                + user{} - same structure as the user{} structure above 
+                + user{} - same structure as the user{} structure above
           o media[] - the videos/images associated with the entry
                 + title? - the title of the media file
                 + player? - the player for this media file (e.g., the YouTube.com URL with the embedded video)
                 + thumbnails[] - the thumbnails for this media file
                       # url
                       # width
-                      # height 
+                      # height
                 + content[] - the different versions of the media file
                       # url
                       # type - the MIME type of the media file
                       # width
-                      # height 
+                      # height
           o via{}? - present if this entry came from an API client
                 + name - the name of the API client, e.g., "Alert Thingy"
-                + url - the official URL of the API client, e.g., http://www.alertthingy.com/ 
+                + url - the official URL of the API client, e.g., http://www.alertthingy.com/
+          o room{}? - if the entry is in a room, the room the entry is in
+
+                + id - the room's FriendFeed UUID
+                + name - the room's display name
+                + nickname - the room's FriendFeed nickname, used in FriendFeed URLs
+                + url - the room's URL on FriendFeed
 
 The simple XML format (output=xml) has the same structure as the JSON. The RSS and Atom formats use the standard RSS and Atom attributes for title, link, published, and updated, and include extension elements for all of the other meta-data.
 
@@ -307,6 +313,21 @@ sub fetch_multi_user_feed {
     my $users = shift;
 
     $self->_fetch_feed("feed/user", nickname => join(',', @$users), @_);
+}
+
+=head2 fetch_room_feed
+
+Returns the most recent entries in the room with the given nickname.
+
+If the room is private, authentication is required.
+
+=cut
+
+sub fetch_room_feed {
+    my $self = shift;
+    my $room = shift;
+
+    $self->_fetch_feed("feed/room/$room", @_);
 }
 
 =head2 fetch_home_feed
