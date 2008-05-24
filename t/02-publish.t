@@ -7,7 +7,7 @@ use utf8;   # strings in Russian present
 use Encode;
 use URI::Escape qw/uri_escape_utf8/;
 
-use Test::More tests => 21;
+use Test::More qw/no_plan/;
 use Test::NoWarnings;
 use Test::Deep;
 use Test::HTTP;
@@ -22,17 +22,19 @@ can_ok($frf, qw/publish_message publish_link/);
 
 http_test_setup { $frf->ua($_[0]) };
 
-ok(!$frf->_need_auth, 'no auth present');
+ok(!$frf->_has_auth, 'no auth present');
 
 ok(!$frf->publish_message('Hello there!'), 'EPERM, need auth');
 
 $frf->login('kappa');
 $frf->remotekey('shlyappa');
 
-ok($frf->_need_auth, 'auth');
+ok($frf->_has_auth, 'auth');
+
+my $pub_rv;
 
 ok(
-http_cmp(sub { $frf->publish_message('Hello there!') },
+http_cmp(sub { $pub_rv = $frf->publish_message('Hello there!') },
     [
         method => 'POST',
         uri => methods(as_string => "${API_EP}share"),
@@ -41,13 +43,17 @@ http_cmp(sub { $frf->publish_message('Hello there!') },
     ]
 ), 'ok with auth');
 
+ok(ref $pub_rv, 'ref from publish');
+
+$frf->return_feeds_as('atom');
+
 =for example
 $frf->publish_link($title, $link, $comment, [@images, [$imgN, $linkN]], $room, $via)
 XXX upload images directly
 =cut
 
 ok(
-http_cmp(sub { $frf->publish_link('Look here:', 'http://r0.ru') },
+http_cmp(sub { $pub_rv = $frf->publish_link('Look here:', 'http://r0.ru') },
     [
         method => 'POST',
         uri => methods(as_string => "${API_EP}share"),
@@ -56,6 +62,10 @@ http_cmp(sub { $frf->publish_link('Look here:', 'http://r0.ru') },
         as_string => re('link=http%3A%2F%2Fr0\.ru'),
     ]
 ), 'ok publish_link');
+
+ok(!ref $pub_rv, 'no ref from publish');
+
+$frf->return_feeds_as('structure');
 
 ok(
 http_cmp(sub { $frf->publish_link('Look here:', 'http://r0.ru', 'This is Rambler-Lite home page') },

@@ -14,4 +14,4 @@ isa_ok($frf, 'Net::FriendFeed', 'trivial constructor works');
 
 $frf = Net::FriendFeed->new({ login => 'kkapp', remotekey => 'shlyappa' });
 is($frf->login, 'kkapp', 'login set from constructor');
-ok($frf->_need_auth, 'auth from the start');
+ok($frf->_has_auth, 'auth from the start');

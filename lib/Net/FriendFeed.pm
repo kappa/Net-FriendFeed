@@ -80,7 +80,7 @@ sub _connect {
     }
 }
 
-sub _need_auth {
+sub _has_auth {
     my $self = shift;
 
     return $self->login && $self->remotekey;
@@ -93,21 +93,33 @@ sub _api_url {
     return $API_ENTRYPOINT . $uri;
 }
 
-sub _fetch_feed {
-    my $self = shift;
-    my $uri = shift;
-    my @args = @_;
+sub _http_req {
+    my ($self, $method, $uri, $needauth, @args) = @_;
+
+    # all posts should be authenticated
+    return if $needauth && !$self->_has_auth;
 
     $self->_connect();
 
     my ($needs_parsing, $format) = ($self->return_feeds_as eq 'structure', $self->return_feeds_as);
     $format = 'json' if $needs_parsing;
 
-    my $get_uri = URI->new($self->_api_url($uri));
-    $get_uri->query_form(format => $format);
-    $get_uri->query_form(@args) if @args;
+    my $req;
+    if ($method eq 'GET') {
+        my $get_uri = URI->new($self->_api_url($uri));
+        $get_uri->query_form(format => $format);
+        $get_uri->query_form(@args) if @args;
 
-    my $req = GET $get_uri->as_string;
+        $req = GET $get_uri->as_string;
+    }
+    elsif ($method eq 'POST') {
+        $req = POST
+            $self->_api_url($uri),
+            [@args];
+    }
+    else {
+        die "Method $method not supported";
+    }
 
     if ($self->login && $self->remotekey) {
         $req->header(Authorization => 'Basic ' . encode_base64($self->login . ':' . $self->remotekey, q{}));
@@ -127,25 +139,18 @@ sub _fetch_feed {
     }
 }
 
+sub _fetch_feed {
+    my $self = shift;
+    my $uri = shift;
+
+    $self->_http_req('GET', $uri, undef, @_);
+}
+
 sub _post {
     my $self = shift;
     my $uri = shift;
 
-    # all posts should be authenticated
-    return unless $self->_need_auth;
-
-    $self->_connect();
-
-    my $req = POST
-        $self->_api_url($uri),
-        shift();
-
-    $req->header(Authorization => 'Basic ' . encode_base64($self->login . ':' . $self->remotekey, q{}));
-
-    ($Last_Http_Response = $self->ua->request($req)) && $Last_Http_Response->is_success
-        or return;
-
-    return $Last_Http_Response->content;
+    $self->_http_req('POST', $uri, 'need auth', @_);
 }
 
 =head1 FEED FUNCTIONS
@@ -352,7 +357,7 @@ Authentication is always required.
 sub fetch_home_feed {
     my $self = shift;
 
-    $self->_need_auth and
+    $self->_has_auth and
         $self->_fetch_feed("feed/home", @_);
 }
 

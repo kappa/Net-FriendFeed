@@ -33,8 +33,10 @@ can_ok($frf, qw/fetch_public_feed fetch_user_feed
 fetch_user_comments_feed fetch_user_likes_feed
 fetch_user_discussion_feed fetch_multi_user_feed fetch_home_feed search fetch_room_feed/);
 
+my $feed_rv;
+
 ok(
-http_cmp(sub { $frf->fetch_public_feed() },
+http_cmp(sub { $feed_rv = $frf->fetch_public_feed() },
     [
         method => 'GET',
         uri => methods(
@@ -45,11 +47,13 @@ http_cmp(sub { $frf->fetch_public_feed() },
     ]
 ), 'public feed');
 
+ok(ref $feed_rv, 'ref, probably object returned as feed');
+
 ok($frf->return_feeds_as('xml'), 'set return_feeds_as');
 is($frf->return_feeds_as, 'xml', 'return_feeds_as set ok');
 
 ok(
-http_cmp(sub { $frf->fetch_user_feed('kkapp') },
+http_cmp(sub { $feed_rv = $frf->fetch_user_feed('kkapp') },
     [
         uri => methods(
             path => re('feed/user/kkapp$'),
@@ -57,6 +61,8 @@ http_cmp(sub { $frf->fetch_user_feed('kkapp') },
         ),
     ]
 ), 'user feed');
+
+ok(!ref $feed_rv, 'xml feed returned as non-ref scalar');
 
 $frf->return_feeds_as('structure');
 
