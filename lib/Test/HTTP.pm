@@ -92,7 +92,8 @@ sub http_cmp {
     $Mock_ua->mock(simple_request => sub {
         cmp_deeply($_[1], methods(@$methods), $msg);
 
-        return $resp || HTTP::Response->new(200, 'Ok');
+        return $resp || HTTP::Response->new(200, 'Ok',
+            [Server => 'mock'], '{"result": "ok"}');    # JSON
     });
 
     $code->();

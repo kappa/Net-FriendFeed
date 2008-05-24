@@ -11,7 +11,6 @@ Net::FriendFeed - Perl interface to FriendFeed.com API
 
 our $VERSION = '0.5';
 
-use JSON::Any;
 use LWP::UserAgent;
 use HTTP::Request::Common;
 use MIME::Base64 qw/encode_base64/;
@@ -20,7 +19,9 @@ use Encode;
 use base qw(Class::Accessor);
 Net::FriendFeed->mk_accessors(qw/login remotekey ua return_feeds_as/);
 
-our $Api_EntryPoint = 'http://friendfeed.com/api/';
+our $API_ENTRYPOINT = 'http://friendfeed.com/api/';
+
+our $Last_Http_Response;
 
 =head1 SYNOPSIS
 
@@ -89,7 +90,7 @@ sub _api_url {
     my $self = shift;
     my $uri = shift;
 
-    return $Api_EntryPoint . $uri;
+    return $API_ENTRYPOINT . $uri;
 }
 
 sub _fetch_feed {
@@ -112,13 +113,17 @@ sub _fetch_feed {
         $req->header(Authorization => 'Basic ' . encode_base64($self->login . ':' . $self->remotekey, q{}));
     }
 
+    ($Last_Http_Response = $self->ua->request($req)) && $Last_Http_Response->is_success
+        or return;
+
     if ($needs_parsing) {
-        my $rv = $self->ua->request($req);
+        require JSON;       # should die if absent
+        JSON->VERSION(2.0); # we need newer JSON
         # do some JSON magic
-        return 'JSON';
+        return JSON::from_json($Last_Http_Response->content, { utf8 => 1});
     }
     else {
-        $self->ua->request($req);
+        return $Last_Http_Response->content;
     }
 }
 
@@ -127,7 +132,7 @@ sub _post {
     my $uri = shift;
 
     # all posts should be authenticated
-    return unless $self->login && $self->remotekey;
+    return unless $self->_need_auth;
 
     $self->_connect();
 
@@ -137,7 +142,10 @@ sub _post {
 
     $req->header(Authorization => 'Basic ' . encode_base64($self->login . ':' . $self->remotekey, q{}));
 
-    $self->ua->request($req);
+    ($Last_Http_Response = $self->ua->request($req)) && $Last_Http_Response->is_success
+        or return;
+
+    return $Last_Http_Response->content;
 }
 
 =head1 FEED FUNCTIONS

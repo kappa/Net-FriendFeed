@@ -7,7 +7,7 @@ FriendFeed is a social feed aggregator. See for yourself.
 The API provides calls to fetch different feeds, to publish data, to
 comment and "like" entries and to get user profile information.
 
-This pure-perl module uses LWP for HTTP fetching & JSON::Any for JSON parsing.
+This pure-perl module uses LWP for HTTP fetching & JSON.pm for JSON parsing.
 
 INSTALLATION
 
