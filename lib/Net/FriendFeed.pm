@@ -9,7 +9,7 @@ Net::FriendFeed - Perl interface to FriendFeed.com API
 
 =cut
 
-our $VERSION = '0.6';
+our $VERSION = '0.8';
 
 use LWP::UserAgent;
 use HTTP::Request::Common;

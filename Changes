@@ -13,3 +13,8 @@ Revision history for Net-FriendFeed
 
 0.6	Sun May 25 02:02:23 MSD 2008
 	Feeds are now parsed (via JSON.pm 2.0).
+
+0.8	Sun May 25 03:32:06 MSD 2008
+	Implement image upload. Implement publisg_link (and other
+	POSTed API functions) result value.
+	Module is now fully up to spec and CPAN-ready.
