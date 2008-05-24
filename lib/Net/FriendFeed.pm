@@ -464,56 +464,191 @@ The /api/share method can also accept uploaded images encoded as multipart/form-
 If any images are uploaded with the /api/share request, the original and the thumbnail are stored on FriendFeed's servers, and the thumbnail is displayed with the entry.
 
 By default, the thumbnails will link to the destination link for the entry. If you want each uploaded image to link somewhere else, you can specify the link in the IMAGENAME_link argument. For example, if your uploaded image is POST argument file0, you can specify the link for that thumbnail as file0_link.
-Comment and Like Entries
-/api/comment - Add or Edit Comments
 
-A POST request to /feed/comment will add a comment or edit an existing comment on a FriendFeed entry. The arguments are:
+=cut 
 
-    * entry - required - The FriendFeed UUID of the entry to which this comment is attached.
-    * body - required - The textual body of the comment.
-    * comment - If given, the FriendFeed UUID of the comment to edit. If not given, the request will create a new comment. 
+=head1 Comment and Like Entries
 
-Example usage from the Python library:
+=head2 add_comment($entry, $body)
 
-service = friendfeed.FriendFeed(nickname, remote_key)
-service.add_comment(
-    entry="550e8400-e29b-41d4-a716-446655440000",
-    body="Testing the FriendFeed API",
+Add a comment on a FriendFeed entry. The arguments are:
+
+=over
+
+=item $entry
+
+required - The FriendFeed UUID of the entry to which this comment is attached.
+
+=item $body
+
+required - The textual body of the comment.
+
+=back
+
+    $frf->add_comment('550e8400-e29b-41d4-a716-446655440000', 'Testing the FriendFeed API');
 )
 
-Example usage with curl:
+=cut
 
-curl -u "nickname:remotekey" -d "entry=550e8400-e29b-41d4-a716-446655440000&body=Testing+the+FriendFeed+API" http://friendfeed.com/api/comment
+sub add_comment {
+    my $self = shift;
+    my ($entry, $comment_text) = @_;
 
-/api/comment/delete - Delete a Comment
+    my @args = ();
 
-A POST request to /feed/comment/delete will delete an existing comment. The arguments are:
+    push @args, entry => $entry;
+    push @args, body => Encode::encode('UTF-8', $comment_text);
 
-    * entry - required - The FriendFeed UUID of the entry to which this comment is attached.
-    * comment - required - The FriendFeed UUID of the comment to delete. 
+    $self->_need_auth and
+        $self->_post('comment', \@args);
+}
 
-/api/like - "Like" an Entry
+=head2 edit_comment($entry, $body, $comment)
 
-A POST request to /feed/like will add a "Like" to a FriendFeed entry for the authenticated user.
+Edit an existing comment on a FriendFeed entry. The arguments are:
 
-    * entry - required - The FriendFeed UUID of the entry to which this comment is attached 
+=over
 
-Example usage from the Python library:
+=item $entry
 
-service = friendfeed.FriendFeed(nickname, remote_key)
-service.add_like("550e8400-e29b-41d4-a716-446655440000")
+required - The FriendFeed UUID of the entry to which this comment is attached.
 
-Example usage with curl:
+=item $body
 
-curl -u "nickname:remotekey" -d "entry=550e8400-e29b-41d4-a716-446655440000" http://friendfeed.com/api/like
+required - The textual body of the comment.
 
-/api/like/delete - Delete a "Like"
+=item $comment
 
-A POST request to /feed/like/delete will delete an existing "Like." The arguments are:
+The FriendFeed UUID of the comment to edit. If not given, the request will create a new comment. 
 
-    * entry - required - The FriendFeed UUID of the entry to which this comment is attached. 
+=back
 
-Get User Profile Information
+=cut
+
+sub edit_comment {
+    my $self = shift;
+    my ($entry, $comment_text, $comment_id) = @_;
+
+    my @args = ();
+
+    push @args, entry => $entry;
+    push @args, comment => $comment_id;
+    push @args, body => Encode::encode('UTF-8', $comment_text);
+
+    $self->_need_auth and
+        $self->_post('comment', \@args);
+}
+
+=head2 delete_comment($entry, $comment)
+
+Delete an existing comment. The arguments are:
+
+=over
+
+=item $entry
+
+required - The FriendFeed UUID of the entry to which this comment is attached.
+
+=item $comment
+
+required - The FriendFeed UUID of the comment to delete. 
+
+=back
+
+=cut
+
+sub delete_comment {
+    my $self = shift;
+    my ($entry, $comment_id) = @_;
+
+    my @args = ();
+
+    push @args, entry => $entry;
+    push @args, comment => $comment_id;
+
+    $self->_need_auth and
+        $self->_post('comment/delete', \@args);
+}
+
+=head2 undelete_comment($entry, $comment)
+
+Undelete a deleted comment. The arguments are:
+
+=over
+
+=item $entry
+
+required - The FriendFeed UUID of the entry to which this comment is attached.
+
+=item $comment
+
+required - The FriendFeed UUID of the comment to undelete. 
+
+=back
+
+=cut
+
+sub undelete_comment {
+    my $self = shift;
+    my ($entry, $comment_id) = @_;
+
+    my @args = ();
+
+    push @args, entry => $entry;
+    push @args, comment => $comment_id;
+    push @args, undelete => 1;
+
+    $self->_need_auth and
+        $self->_post('comment/delete', \@args);
+}
+
+=head2 add_like($entry)
+
+Add a "Like" to a FriendFeed entry for the authenticated user.
+
+=over
+
+=item $entry
+
+required - The FriendFeed UUID of the entry to which this comment is attached
+
+=back
+
+    $frf->add_like("550e8400-e29b-41d4-a716-446655440000")
+
+=cut
+
+sub add_like {
+    my $self = shift;
+    my $entry = shift;
+
+    $self->_need_auth and
+        $self->_post('like', [entry => $entry]);
+}
+
+=head2 delete_like($entry)
+
+Delete an existing "Like". The arguments are:
+
+=over
+
+=item $entry
+
+required - The FriendFeed UUID of the entry to which this comment is attached.
+
+=back
+
+=cut
+
+sub delete_like {
+    my $self = shift;
+    my $entry = shift;
+
+    $self->_need_auth and
+        $self->_post('like/delete', [entry => $entry]);
+}
+
+=head1 Get User Profile Information
 /api/user/USERNAME/profile - Get services and subscriptions
 
 Returns list of all of the user's subscriptions (people) and services connected to their account:
