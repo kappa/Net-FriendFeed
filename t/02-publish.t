@@ -78,6 +78,7 @@ ok(
 http_cmp(sub { $frf->publish_link('Look here:', 'http://r0.ru', undef, undef, 'Dining Room') },
     [
         as_string => re('room=Dining\+Room'),
+        as_string => re('(?!image)'),
     ]
 ), 'ok publish_link to room');
 
