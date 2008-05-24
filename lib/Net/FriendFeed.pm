@@ -15,6 +15,7 @@ use LWP::UserAgent;
 use HTTP::Request::Common;
 use MIME::Base64 qw/encode_base64/;
 use Encode;
+use File::Spec;
 
 use base qw(Class::Accessor);
 Net::FriendFeed->mk_accessors(qw/login remotekey ua return_feeds_as/);
@@ -113,9 +114,8 @@ sub _http_req {
         $req = GET $get_uri->as_string;
     }
     elsif ($method eq 'POST') {
-        $req = POST
-            $self->_api_url($uri),
-            [@args];
+        $req = POST $self->_api_url($uri),
+            @args;
     }
     else {
         die "Method $method not supported";
@@ -435,10 +435,13 @@ Automatically add 1st comment to the item.
 
 =item $images
 
-This one is an arrayref of either image URLs or pairs (taken as
-arrayrefs of two elements) or URL1 => URL2. URL1 in the pair points to
-the image and URL2 is used as a href to follow when the user clicks on
-this very image. URL2 defaults to the main $link.
+This one is an arrayref of image items. Each image item is either an image PURL or a
+pair (taken as arrayrefs of two elements) of PURL => URL. PURL in the
+pair points to the image and URL is used as a href to follow when the
+user clicks on this very image. URL defaults to the main $link.
+
+Each PURL may be either an (http|https|ftp) URL or a PATH to a local
+file in which case that file gets uploaded directly to FriendFeed.
 
 =item $room
 
@@ -465,15 +468,35 @@ sub publish_link {
     push @args, room => $room if defined $room;
     push @args, via => $via if defined $via;
 
+    my $multipart;
+
     if ($imgs && ref $imgs eq 'ARRAY') {
-        push @args, (
-            ref $imgs->[$_]
-            ? ("image${_}_url" => $imgs->[$_]->[0], "image${_}_link" => $imgs->[$_]->[1])
-            : ("image${_}_url" => $imgs->[$_])
-        ) foreach 0 .. $#$imgs;
+        foreach (0 .. $#$imgs) {
+            if (ref $imgs->[$_]) { # image AND link
+
+                if ($imgs->[$_]->[0] =~ m{^(?:http|https|ftp)://}) { # remote image
+                    push @args, ("image${_}_url" => $imgs->[$_]->[0], "image${_}_link" => $imgs->[$_]->[1]);
+                }
+                else {
+                    $multipart = 1;
+                    my $filename = (File::Spec->splitpath($imgs->[$_]->[0]))[2]; # kinda basename
+                    push @args, ("image${_}" => [$imgs->[$_]->[0], $filename], "${filename}_link" => $imgs->[$_]->[1]);
+                }
+            }
+            else {
+                if ($imgs->[$_] =~ m{^(?:http|https|ftp)://}) { # remote image
+                    push @args, ("image${_}_url" => $imgs->[$_]);
+                }
+                else {
+                    $multipart = 1;
+                    push @args, ("image${_}" => [$imgs->[$_]]);
+                }
+            }
+        }
     }
 
-    $self->_post('share', \@args);
+    $self->_post('share', Content => \@args,
+        $multipart ? (Content_Type => 'form-data') : ());
 }
 
 =head2 publish_message($msg)
@@ -529,12 +552,7 @@ sub add_comment {
     my $self = shift;
     my ($entry, $comment_text) = @_;
 
-    my @args = ();
-
-    push @args, entry => $entry;
-    push @args, body => Encode::encode('UTF-8', $comment_text);
-
-    $self->_post('comment', \@args);
+    $self->_post('comment', [entry => $entry, body => Encode::encode('UTF-8', $comment_text)]);
 }
 
 =head2 edit_comment($entry, $body, $comment)
@@ -563,13 +581,11 @@ sub edit_comment {
     my $self = shift;
     my ($entry, $comment_text, $comment_id) = @_;
 
-    my @args = ();
-
-    push @args, entry => $entry;
-    push @args, comment => $comment_id;
-    push @args, body => Encode::encode('UTF-8', $comment_text);
-
-    $self->_post('comment', \@args);
+    $self->_post('comment', [
+        entry   => $entry,
+        comment => $comment_id,
+        body    => Encode::encode('UTF-8', $comment_text),
+    ]);
 }
 
 =head2 delete_comment($entry, $comment)
@@ -594,12 +610,7 @@ sub delete_comment {
     my $self = shift;
     my ($entry, $comment_id) = @_;
 
-    my @args = ();
-
-    push @args, entry => $entry;
-    push @args, comment => $comment_id;
-
-    $self->_post('comment/delete', \@args);
+    $self->_post('comment/delete', [entry => $entry, comment => $comment_id]);
 }
 
 =head2 undelete_comment($entry, $comment)
@@ -624,13 +635,11 @@ sub undelete_comment {
     my $self = shift;
     my ($entry, $comment_id) = @_;
 
-    my @args = ();
-
-    push @args, entry => $entry;
-    push @args, comment => $comment_id;
-    push @args, undelete => 1;
-
-    $self->_post('comment/delete', \@args);
+    $self->_post('comment/delete', [
+        entry       => $entry,
+        comment     => $comment_id,
+        undelete    => 1,
+    ]);
 }
 
 =head2 add_like($entry)

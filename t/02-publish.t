@@ -88,9 +88,21 @@ ok(
 http_cmp( sub { $frf->publish_link('Look here:', 'http://r0.ru', undef, ['http://images.rambler.ru/lt/rambler.gif',
             ['http://images.rambler.ru/lt/rambler.gif', 'http://mail.rambler.ru']]) },
     [
+        ['header', 'Content-Type'] => 'application/x-www-form-urlencoded', # still no multipart
         as_string => re('image1_link=\S+mail\.rambler\.ru'),
     ]
 ), 'ok publish_link w/ img and special img-link');
+
+ok(
+http_cmp( sub { $frf->publish_link('Look here:', 'http://r0.ru', undef, ['/etc/rc.local',
+            ['/etc/fstab', 'http://mail.rambler.ru']]) },
+    [
+        ['header', 'Content-Type'] => re('^multipart/form-data; boundary='),    # gotcha!
+        as_string => re('Content-Disposition: form-data; \S+; filename="rc.local"'),
+        as_string => re('Content-Disposition: form-data; \S+; filename="fstab"'),
+        as_string => re('Content-Disposition: form-data; name="fstab_link"\r\n\r\nhttp://mail\.rambler\.ru'),
+    ]
+), 'ok publish_link w/ img from files');
 
 ok(
 http_cmp(sub { $frf->publish_link('Look here:', 'http://r0.ru', undef, undef, 'Dining Room') },
@@ -114,4 +126,3 @@ http_cmp(sub { $frf->publish_message('Рамблер ftw!') },
         as_string => re('title=' . uri_escape_utf8('Рамблер') . '\+ftw!'),
     ]
 ), 'publish non-ASCII data');
-
