@@ -126,15 +126,16 @@ sub _post {
     my $self = shift;
     my $uri = shift;
 
+    # all posts should be authenticated
+    return unless $self->login && $self->remotekey;
+
     $self->_connect();
 
     my $req = POST
         $self->_api_url($uri),
         shift();
 
-    if ($self->login && $self->remotekey) {
-        $req->header(Authorization => 'Basic ' . encode_base64($self->login . ':' . $self->remotekey, q{}));
-    }
+    $req->header(Authorization => 'Basic ' . encode_base64($self->login . ':' . $self->remotekey, q{}));
 
     $self->ua->request($req);
 }
@@ -459,8 +460,7 @@ sub publish_link {
         ) foreach 0 .. $#$imgs;
     }
 
-    $self->_need_auth and
-        $self->_post('share', \@args);
+    $self->_post('share', \@args);
 }
 
 =head2 publish_message($msg)
@@ -521,8 +521,7 @@ sub add_comment {
     push @args, entry => $entry;
     push @args, body => Encode::encode('UTF-8', $comment_text);
 
-    $self->_need_auth and
-        $self->_post('comment', \@args);
+    $self->_post('comment', \@args);
 }
 
 =head2 edit_comment($entry, $body, $comment)
@@ -557,8 +556,7 @@ sub edit_comment {
     push @args, comment => $comment_id;
     push @args, body => Encode::encode('UTF-8', $comment_text);
 
-    $self->_need_auth and
-        $self->_post('comment', \@args);
+    $self->_post('comment', \@args);
 }
 
 =head2 delete_comment($entry, $comment)
@@ -588,8 +586,7 @@ sub delete_comment {
     push @args, entry => $entry;
     push @args, comment => $comment_id;
 
-    $self->_need_auth and
-        $self->_post('comment/delete', \@args);
+    $self->_post('comment/delete', \@args);
 }
 
 =head2 undelete_comment($entry, $comment)
@@ -620,8 +617,7 @@ sub undelete_comment {
     push @args, comment => $comment_id;
     push @args, undelete => 1;
 
-    $self->_need_auth and
-        $self->_post('comment/delete', \@args);
+    $self->_post('comment/delete', \@args);
 }
 
 =head2 add_like($entry)
@@ -644,8 +640,7 @@ sub add_like {
     my $self = shift;
     my $entry = shift;
 
-    $self->_need_auth and
-        $self->_post('like', [entry => $entry]);
+    $self->_post('like', [entry => $entry]);
 }
 
 =head2 delete_like($entry)
@@ -666,8 +661,7 @@ sub delete_like {
     my $self = shift;
     my $entry = shift;
 
-    $self->_need_auth and
-        $self->_post('like/delete', [entry => $entry]);
+    $self->_post('like/delete', [entry => $entry]);
 }
 
 =head1 PROFILE FUNCTIONS

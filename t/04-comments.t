@@ -66,6 +66,19 @@ http_cmp(sub { $frf->delete_comment('entry_1', 'comment_1') },
 ), 'delete comment');
 
 ok(
+http_cmp(sub { $frf->undelete_comment('entry_1', 'comment_1') },
+    [
+        method => 'POST',
+        uri => methods(
+            path => re('comment/delete$'),
+        ),
+        as_string => re('entry=entry_1'),
+        as_string => re('comment=comment_1'),
+        as_string => re('undelete=1'),
+    ]
+), 'undelete comment');
+
+ok(
 http_cmp(sub { $frf->add_like('entry_1') },
     [
         method => 'POST',

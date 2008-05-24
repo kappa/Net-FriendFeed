@@ -19,6 +19,10 @@ our $API_EP = $Net::FriendFeed::Api_EntryPoint = 'http://kapranoff.ru/api/';
 
 my $frf = new Net::FriendFeed;
 
+ok(!$frf->ua, 'empty UA by default');
+ok($frf->_connect, 'connect');
+isa_ok($frf->ua, 'LWP::UserAgent', 'autocreate LWP::UserAgent UA');
+
 http_test_setup { $frf->ua($_[0]) };
 
 can_ok($frf, qw/return_feeds_as/);

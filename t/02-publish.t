@@ -7,7 +7,7 @@ use utf8;   # strings in Russian present
 use Encode;
 use URI::Escape qw/uri_escape_utf8/;
 
-use Test::More tests => 19;
+use Test::More tests => 21;
 use Test::NoWarnings;
 use Test::Deep;
 use Test::HTTP;
@@ -22,10 +22,14 @@ can_ok($frf, qw/publish_message publish_link/);
 
 http_test_setup { $frf->ua($_[0]) };
 
+ok(!$frf->_need_auth, 'no auth present');
+
 ok(!$frf->publish_message('Hello there!'), 'EPERM, need auth');
 
 $frf->login('kappa');
 $frf->remotekey('shlyappa');
+
+ok($frf->_need_auth, 'auth');
 
 ok(
 http_cmp(sub { $frf->publish_message('Hello there!') },
