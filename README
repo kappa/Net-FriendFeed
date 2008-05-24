@@ -1,4 +1,4 @@
-Net::FriendFeed 0.5
+Net::FriendFeed
 
 This module provides Perl wrapper around FriendFeed.com API.
 
