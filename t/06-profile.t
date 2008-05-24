@@ -6,7 +6,7 @@ use strict;
 use Test::More qw/no_plan/;
 use Test::NoWarnings;
 use Test::Deep;
-use Test::MockObject::Extends;
+use Test::HTTP;
 
 use LWP::UserAgent;
 
@@ -16,11 +16,16 @@ our $API_EP = $Net::FriendFeed::Api_EntryPoint = 'http://kapranoff.ru/api/';
 
 my $frf = new Net::FriendFeed;
 
-TODO: {
-local $TODO = 'Profiles are not implemented';
+can_ok($frf, 'fetch_user_profile');
 
-foreach (qw/fetch_user_profile/) {
-    can_ok($frf, $_);
-}
+http_test_setup { $frf->ua($_[0]) };
 
-}
+ok(
+http_cmp(sub { $frf->fetch_user_profile('kkapp') },
+    [
+        method => 'GET',
+        uri => methods(
+            path => re('user/kkapp/profile$'),
+        ),
+    ]
+), 'user profile feed');

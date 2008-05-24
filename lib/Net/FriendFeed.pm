@@ -9,12 +9,13 @@ Net::FriendFeed - Perl interface to FriendFeed.com API
 
 =cut
 
-our $VERSION = '0.2';
+our $VERSION = '0.5';
 
-#use JSON::Any;
+use JSON::Any;
 use LWP::UserAgent;
 use HTTP::Request::Common;
 use MIME::Base64 qw/encode_base64/;
+use Encode;
 
 use base qw(Class::Accessor);
 Net::FriendFeed->mk_accessors(qw/login remotekey ua return_feeds_as/);
@@ -340,7 +341,6 @@ Authentication is always required.
 
 sub fetch_home_feed {
     my $self = shift;
-    my $user = shift;
 
     $self->_need_auth and
         $self->_fetch_feed("feed/home", @_);
@@ -670,13 +670,12 @@ sub delete_like {
 }
 
 =head1 Get User Profile Information
-/api/user/USERNAME/profile - Get services and subscriptions
 
-Returns list of all of the user's subscriptions (people) and services connected to their account:
+=head2 fetch_user_profile($user)
 
-http://friendfeed.com/api/user/bret/profile
+Returns list of all of the user's subscriptions (people) and services connected to their account.
 
-The returned JSON has the form:
+The returned data has this structure:
 
     * id - the user's FriendFeed UUID
     * name - the user's full name
@@ -697,6 +696,13 @@ The returned JSON has the form:
           o profileUrl 
 
 =cut
+
+sub fetch_user_profile {
+    my $self = shift;
+    my $user = shift;
+
+    $self->_fetch_feed("user/$user/profile", @_);
+}
 
 =head1 AUTHOR
 
