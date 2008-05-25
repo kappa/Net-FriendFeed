@@ -11,6 +11,7 @@ use Test::More qw/no_plan/;
 use Test::NoWarnings;
 use Test::Deep;
 use Test::HTTP;
+use FindBin qw/$Bin/;
 
 use Net::FriendFeed;
 
@@ -113,13 +114,13 @@ http_cmp(sub { $frf->publish_link('Look here:', 'http://r0.ru', undef, undef, 'D
 ), 'ok publish_link to room and old args are not kept');
 
 ok(
-http_cmp( sub { $frf->publish_link('Look here:', 'http://r0.ru', undef, ['/etc/rc.local',
-            ['/etc/fstab', 'http://mail.rambler.ru']]) },
+http_cmp( sub { $frf->publish_link('Look here:', 'http://r0.ru', undef, ["$Bin/pod.t",
+            ["$Bin/00-load.t", 'http://mail.rambler.ru']]) },
     [
         ['header', 'Content-Type'] => re('^multipart/form-data; boundary='),    # gotcha!
-        as_string => re('Content-Disposition: form-data; \S+; filename="rc.local"'),
-        as_string => re('Content-Disposition: form-data; \S+; filename="fstab"'),
-        as_string => re('Content-Disposition: form-data; name="fstab_link"\r\n\r\nhttp://mail\.rambler\.ru'),
+        as_string => re('Content-Disposition: form-data; \S+; filename="pod.t"'),
+        as_string => re('Content-Disposition: form-data; \S+; filename="00-load.t"'),
+        as_string => re('Content-Disposition: form-data; name="00-load.t_link"\r\n\r\nhttp://mail\.rambler\.ru'),
     ]
 ), 'ok publish_link w/ img from files');
 

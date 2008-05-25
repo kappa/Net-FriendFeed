@@ -1,5 +1,9 @@
 Revision history for Net-FriendFeed
 
+0.81	Sun May 25 13:54:12 MSD 2008
+	Cpantesters reports arrived. Fix test with local files to use
+	FindBin.
+
 0.8	Sun May 25 03:32:06 MSD 2008
 	Implement image upload. Implement publisg_link (and other
 	POSTed API functions) result value.
