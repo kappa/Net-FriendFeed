@@ -59,12 +59,12 @@ Authentication is needed only to post or to read private feeds.
 =cut
 
 sub new {
-    my($proto, $fields) = @_;
-    my($class) = ref $proto || $proto;
+    my ($proto, $fields) = @_;
+    my $class = ref $proto || $proto;
 
     $fields = {} unless defined $fields;
 
-    my $self = {%$fields};
+    my $self = { %$fields };
 
     $self->{return_feeds_as} ||= 'structure';
 
@@ -113,15 +113,12 @@ sub _http_req {
 
         $req = GET $get_uri->as_string;
     }
-    elsif ($method eq 'POST') {
+    else { # $method eq 'POST'
         $req = POST $self->_api_url($uri),
             @args;
     }
-    else {
-        die "Method $method not supported";
-    }
 
-    if ($self->login && $self->remotekey) {
+    if ($self->_has_auth) {
         $req->header(Authorization => 'Basic ' . encode_base64($self->login . ':' . $self->remotekey, q{}));
     }
 

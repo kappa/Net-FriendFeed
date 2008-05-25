@@ -27,6 +27,9 @@ ok(!$frf->_has_auth, 'no auth present');
 ok(!$frf->publish_message('Hello there!'), 'EPERM, need auth');
 
 $frf->login('kappa');
+
+ok(!$frf->publish_message('Hello there!'), 'EPERM, need more auth');
+
 $frf->remotekey('shlyappa');
 
 ok($frf->_has_auth, 'auth');
@@ -85,6 +88,14 @@ http_cmp(sub { $frf->publish_link('Look here:', 'http://r0.ru', 'cmnt2',
 ), 'ok publish_link w/ img & comment');
 
 ok(
+http_cmp( sub { $frf->publish_link('Look here:', 'http://r0.ru', undef, 'bad images') },
+    [
+        ['header', 'Content-Type'] => 'application/x-www-form-urlencoded', # still no multipart
+        as_string => code(sub { $_[0] !~ /image/ }),
+    ]
+), 'ok publish_link w/ bad imgs');
+
+ok(
 http_cmp( sub { $frf->publish_link('Look here:', 'http://r0.ru', undef, ['http://images.rambler.ru/lt/rambler.gif',
             ['http://images.rambler.ru/lt/rambler.gif', 'http://mail.rambler.ru']]) },
     [
@@ -92,6 +103,14 @@ http_cmp( sub { $frf->publish_link('Look here:', 'http://r0.ru', undef, ['http:/
         as_string => re('image1_link=\S+mail\.rambler\.ru'),
     ]
 ), 'ok publish_link w/ img and special img-link');
+
+ok(
+http_cmp(sub { $frf->publish_link('Look here:', 'http://r0.ru', undef, undef, 'Dining Room') },
+    [
+        as_string => re('room=Dining\+Room'),
+        as_string => code(sub { $_[0] !~ 'image' }),
+    ]
+), 'ok publish_link to room and old args are not kept');
 
 ok(
 http_cmp( sub { $frf->publish_link('Look here:', 'http://r0.ru', undef, ['/etc/rc.local',
@@ -103,14 +122,6 @@ http_cmp( sub { $frf->publish_link('Look here:', 'http://r0.ru', undef, ['/etc/r
         as_string => re('Content-Disposition: form-data; name="fstab_link"\r\n\r\nhttp://mail\.rambler\.ru'),
     ]
 ), 'ok publish_link w/ img from files');
-
-ok(
-http_cmp(sub { $frf->publish_link('Look here:', 'http://r0.ru', undef, undef, 'Dining Room') },
-    [
-        as_string => re('room=Dining\+Room'),
-        as_string => code(sub { $_[0] !~ 'image' }),
-    ]
-), 'ok publish_link to room and old args are not kept');
 
 ok(
 http_cmp(sub { $frf->publish_link('Look here:', 'http://r0.ru', undef, undef, 'Dining Room', 'Perl!') },
@@ -126,3 +137,11 @@ http_cmp(sub { $frf->publish_message('Рамблер ftw!') },
         as_string => re('title=' . uri_escape_utf8('Рамблер') . '\+ftw!'),
     ]
 ), 'publish non-ASCII data');
+
+ok(
+!http_cmp(sub { $pub_rv = $frf->publish_message('Hello there!') },
+    [
+        as_string => re('title=Hello\+there!'),
+    ], undef,
+    HTTP::Response->new(500, 'Hehe'),
+), 'bad response');
