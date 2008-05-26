@@ -9,6 +9,4 @@ pm_to_blib*
 .lwpcookies
 Net-FriendFeed-*
 cover_db
-META.yml
-Makefile.PL
 *.sw?
