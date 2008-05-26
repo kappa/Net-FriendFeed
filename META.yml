@@ -1,0 +1,28 @@
+---
+name: Net-FriendFeed
+version: 0.81
+author:
+  - 'Alex Kapranoff <kappa@cpan.org>'
+abstract: Perl interface to FriendFeed.com API
+license: gpl
+resources:
+  license: http://www.opensource.org/licenses/gpl-license.php
+requires:
+  Class::Accessor: 0
+  HTTP::Request::Common: 0
+  JSON: 2
+  LWP::UserAgent: 0
+  URI: 0
+  perl: 5.8.2
+build_requires:
+  Test::MockObject: 0
+provides:
+  Net::FriendFeed:
+    file: lib/Net/FriendFeed.pm
+    version: 0.81
+  Test::HTTP:
+    file: lib/Test/HTTP.pm
+generated_by: Module::Build version 0.2808
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.2.html
+  version: 1.2
