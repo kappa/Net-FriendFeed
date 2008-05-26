@@ -60,7 +60,7 @@ ok(
 http_cmp(sub { $pub_rv = $frf->publish_link('Look here:', 'http://r0.ru') },
     [
         method => 'POST',
-        uri => methods(as_string => "${API_EP}share"),
+        uri => methods(as_string => "${API_EP}share?format=atom"),
         [qw/header Authorization/] => re('Basic \w+'),
         as_string => re('title=Look\+here'),
         as_string => re('link=http%3A%2F%2Fr0\.ru'),

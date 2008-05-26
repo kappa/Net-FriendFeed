@@ -41,8 +41,8 @@ http_cmp(sub { $feed_rv = $frf->fetch_public_feed() },
         method => 'GET',
         uri => methods(
             as_string => re("^${API_EP}feed/public"),
-            query_param => 1,   # 1 param
-            ['query_param', 'format'] => 'json',
+            query_param => 0,   # 0 params, because format=json is default
+            ['query_param', 'format'] => undef,
         ),
     ]
 ), 'public feed');
@@ -57,6 +57,7 @@ http_cmp(sub { $feed_rv = $frf->fetch_user_feed('kkapp') },
     [
         uri => methods(
             path => re('feed/user/kkapp$'),
+            query_param => 1,   # 1 param
             ['query_param', 'format'] => 'xml',
         ),
     ]
@@ -136,3 +137,26 @@ http_cmp(sub { $frf->fetch_room_feed('ru-friendfeed') },
         ),
     ]
 ), 'room feed');
+
+$frf->return_feeds_as('xml&1');
+ok(
+http_cmp(sub { $frf->fetch_user_feed('kka?/&+ pp') },
+    [
+        uri => methods(
+            path => re('feed/user/kka%3F%2F%26%2B%20pp$'),
+            ['query_param', 'format'] => 'xml&1',
+            as_string => re('format=xml%261'),
+        ),
+    ]
+), 'unsafe data in parameters');
+
+ok(
+http_cmp(sub { $frf->fetch_multi_user_feed(['kka/pp', 'mi&hun']) },
+    [
+        uri => methods(
+            path => re('feed/user$'),
+            as_string => re('nickname=kka%2Fpp%2Cmi%26hun'),
+            ['query_param', 'nickname'], 'kka/pp,mi&hun',
+        ),
+    ]
+), 'multi user unsafe data');

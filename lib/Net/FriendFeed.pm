@@ -9,13 +9,14 @@ Net::FriendFeed - Perl interface to FriendFeed.com API
 
 =cut
 
-our $VERSION = '0.81';
+our $VERSION = '0.82';
 
-use LWP::UserAgent;
-use HTTP::Request::Common;
-use MIME::Base64 qw/encode_base64/;
 use Encode;
 use File::Spec;
+use HTTP::Request::Common;
+use LWP::UserAgent;
+use MIME::Base64 qw/encode_base64/;
+use URI::Escape;
 
 use base qw(Class::Accessor);
 Net::FriendFeed->mk_accessors(qw/login remotekey ua return_feeds_as/);
@@ -108,13 +109,15 @@ sub _http_req {
     my $req;
     if ($method eq 'GET') {
         my $get_uri = URI->new($self->_api_url($uri));
-        $get_uri->query_form(format => $format);
+        $get_uri->query_form(format => $format) unless $format eq 'json';
         $get_uri->query_form(@args) if @args;
 
         $req = GET $get_uri->as_string;
     }
     else { # $method eq 'POST'
-        $req = POST $self->_api_url($uri),
+        my $post_uri = URI->new($self->_api_url($uri));
+        $post_uri->query_form(format => $format) unless $format eq 'json';
+        $req = POST $post_uri,
             @args;
     }
 
@@ -265,7 +268,7 @@ sub fetch_user_feed {
     my $self = shift;
     my $user = shift;
 
-    $self->_fetch_feed("feed/user/$user", @_);
+    $self->_fetch_feed('feed/user/' . uri_escape($user), @_);
 }
 
 =head2 fetch_user_comments_feed($user)
@@ -278,7 +281,7 @@ sub fetch_user_comments_feed {
     my $self = shift;
     my $user = shift;
 
-    $self->_fetch_feed("feed/user/$user/comments", @_);
+    $self->_fetch_feed('feed/user/' . uri_escape($user) . '/comments', @_);
 }
 
 =head2 fetch_user_likes_feed($user)
@@ -291,7 +294,7 @@ sub fetch_user_likes_feed {
     my $self = shift;
     my $user = shift;
 
-    $self->_fetch_feed("feed/user/$user/likes", @_);
+    $self->_fetch_feed('feed/user/' . uri_escape($user) . '/likes', @_);
 }
 
 =head2 fetch_user_discussion_feed($user)
@@ -304,7 +307,7 @@ sub fetch_user_discussion_feed {
     my $self = shift;
     my $user = shift;
 
-    $self->_fetch_feed("feed/user/$user/discussion", @_);
+    $self->_fetch_feed('feed/user/' . uri_escape($user) . '/discussion', @_);
 }
 
 =head2 fetch_multi_user_feed(\@users)
@@ -325,7 +328,7 @@ sub fetch_multi_user_feed {
     my $self = shift;
     my $users = shift;
 
-    $self->_fetch_feed("feed/user", nickname => join(',', @$users), @_);
+    $self->_fetch_feed('feed/user', nickname => join(',', @$users), @_);
 }
 
 =head2 fetch_room_feed($room)
@@ -340,7 +343,7 @@ sub fetch_room_feed {
     my $self = shift;
     my $room = shift;
 
-    $self->_fetch_feed("feed/room/$room", @_);
+    $self->_fetch_feed('feed/room/' . uri_escape($room), @_);
 }
 
 =head2 fetch_home_feed
@@ -355,7 +358,7 @@ sub fetch_home_feed {
     my $self = shift;
 
     $self->_has_auth and
-        $self->_fetch_feed("feed/home", @_);
+        $self->_fetch_feed('feed/home', @_);
 }
 
 =head2 search($query)
@@ -387,7 +390,7 @@ sub search {
     my $self = shift;
     my $q = shift;
 
-    $self->_fetch_feed("feed/search", q => Encode::encode('UTF-8', $q), @_);
+    $self->_fetch_feed('feed/search', q => Encode::encode('UTF-8', $q), @_);
 }
 
 =head1 PUBLISHING FUNCTIONS

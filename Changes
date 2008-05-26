@@ -1,5 +1,8 @@
 Revision history for Net-FriendFeed
 
+0.82	Mon May 26 12:59:26 MSD 2008
+	Escape urls for security. Fix more cpantesters report.
+
 0.81	Sun May 25 13:54:12 MSD 2008
 	Cpantesters reports arrived. Fix test with local files to use
 	FindBin.
