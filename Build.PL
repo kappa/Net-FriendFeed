@@ -9,9 +9,11 @@ my $builder = Module::Build->new(
     dist_version_from   => 'lib/Net/FriendFeed.pm',
     build_requires => {
         'Test::MockObject' => 0,
+        'Test::NoWarnings' => 0,
     },
     requires => {
-        'perl' => '5.8.2',
+        'perl' => '5.008',  # does it work?
+        'Encode' => 0,
         'LWP::UserAgent' => 0,
         'HTTP::Request::Common' => 0,
         'Class::Accessor' => 0,
