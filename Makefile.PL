@@ -6,10 +6,12 @@ WriteMakefile
           'VERSION_FROM' => 'lib/Net/FriendFeed.pm',
           'PREREQ_PM' => {
                            'Class::Accessor' => '0',
+                           'Encode' => '0',
                            'HTTP::Request::Common' => '0',
                            'JSON' => '2',
                            'LWP::UserAgent' => '0',
                            'Test::MockObject' => '0',
+                           'Test::NoWarnings' => '0',
                            'URI' => '0'
                          },
           'INSTALLDIRS' => 'site',

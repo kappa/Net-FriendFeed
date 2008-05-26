@@ -9,13 +9,15 @@ resources:
   license: http://www.opensource.org/licenses/gpl-license.php
 requires:
   Class::Accessor: 0
+  Encode: 0
   HTTP::Request::Common: 0
   JSON: 2
   LWP::UserAgent: 0
   URI: 0
-  perl: 5.8.2
+  perl: 5.008
 build_requires:
   Test::MockObject: 0
+  Test::NoWarnings: 0
 provides:
   Net::FriendFeed:
     file: lib/Net/FriendFeed.pm
