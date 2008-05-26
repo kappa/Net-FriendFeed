@@ -12,7 +12,7 @@ my $builder = Module::Build->new(
         'Test::NoWarnings' => 0,
     },
     requires => {
-        'perl' => '5.008',  # does it work?
+        'perl' => '5.008',
         'Encode' => 0,
         'LWP::UserAgent' => 0,
         'HTTP::Request::Common' => 0,
