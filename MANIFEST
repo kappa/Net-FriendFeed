@@ -3,7 +3,7 @@
 Build.PL
 Changes
 lib/Net/FriendFeed.pm
-lib/Test/HTTP.pm
+lib/Test/MockHTTP.pm
 MANIFEST
 README
 scripts/share.pl

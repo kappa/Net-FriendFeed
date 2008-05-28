@@ -8,6 +8,7 @@ my $builder = Module::Build->new(
     dist_author         => 'Alex Kapranoff <kappa@cpan.org>',
     dist_version_from   => 'lib/Net/FriendFeed.pm',
     build_requires => {
+        'Test::Deep' => 0,
         'Test::MockObject' => 0,
         'Test::NoWarnings' => 0,
     },

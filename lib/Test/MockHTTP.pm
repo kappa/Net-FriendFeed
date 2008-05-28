@@ -1,11 +1,11 @@
-package Test::HTTP;
+package Test::MockHTTP;
 
 use warnings;
 use strict;
 
 =head1 NAME
 
-Test::HTTP - utility to test LWP usage without actual HTTP requests
+Test::MockHTTP - utility to test LWP usage without actual HTTP requests
 
 =cut
 
@@ -22,7 +22,7 @@ my $Mock_ua;
 
 =head1 SYNOPSIS
 
-    use Test::HTTP;
+    use Test::MockHTTP;
 
     my $ua;
     http_test_setup { $ua = $_[0] };

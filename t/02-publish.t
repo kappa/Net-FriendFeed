@@ -10,7 +10,7 @@ use URI::Escape qw/uri_escape_utf8/;
 use Test::More qw/no_plan/;
 use Test::NoWarnings;
 use Test::Deep;
-use Test::HTTP;
+use Test::MockHTTP;
 use FindBin qw/$Bin/;
 
 use Net::FriendFeed;

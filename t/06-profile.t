@@ -6,7 +6,7 @@ use strict;
 use Test::More qw/no_plan/;
 use Test::NoWarnings;
 use Test::Deep;
-use Test::HTTP;
+use Test::MockHTTP;
 
 use LWP::UserAgent;
 

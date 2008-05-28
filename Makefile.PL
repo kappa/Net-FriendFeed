@@ -10,6 +10,7 @@ WriteMakefile
                            'HTTP::Request::Common' => '0',
                            'JSON' => '2',
                            'LWP::UserAgent' => '0',
+                           'Test::Deep' => '0',
                            'Test::MockObject' => '0',
                            'Test::NoWarnings' => '0',
                            'URI' => '0'

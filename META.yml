@@ -1,6 +1,6 @@
 ---
 name: Net-FriendFeed
-version: 0.82
+version: 0.83
 author:
   - 'Alex Kapranoff <kappa@cpan.org>'
 abstract: Perl interface to FriendFeed.com API
@@ -16,14 +16,15 @@ requires:
   URI: 0
   perl: 5.008
 build_requires:
+  Test::Deep: 0
   Test::MockObject: 0
   Test::NoWarnings: 0
 provides:
   Net::FriendFeed:
     file: lib/Net/FriendFeed.pm
-    version: 0.82
-  Test::HTTP:
-    file: lib/Test/HTTP.pm
+    version: 0.83
+  Test::MockHTTP:
+    file: lib/Test/MockHTTP.pm
 generated_by: Module::Build version 0.2808
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.2.html

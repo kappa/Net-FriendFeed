@@ -9,7 +9,7 @@ Net::FriendFeed - Perl interface to FriendFeed.com API
 
 =cut
 
-our $VERSION = '0.82';
+our $VERSION = '0.83';
 
 use Encode;
 use File::Spec;
