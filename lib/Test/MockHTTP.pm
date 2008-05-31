@@ -9,13 +9,13 @@ Test::MockHTTP - utility to test LWP usage without actual HTTP requests
 
 =cut
 
-use Test::MockObject::Extends;
-use Test::Deep;
-use LWP::UserAgent;
-
 use base qw/Exporter/;
 
 our @EXPORT = qw/http_cmp http_test_setup/;
+
+use Test::MockObject::Extends;
+use Test::Deep;
+use LWP::UserAgent;
 
 my $Http_test_setup;
 my $Mock_ua;
