@@ -1,5 +1,10 @@
 Revision history for Net-FriendFeed
 
+0.84	Sat May 31 18:10:45 MSD 2008
+	Defeat 5.10 compatibility issue which was actually a clash
+	between newer base.pm and Test::Deep::isa(). Thanks to
+	cpantesters reports.
+
 0.83	Thu May 29 01:17:04 MSD 2008
 	Deal with 'unauthorized release' issue by renaming Test::HTTP
 	which was taken into Test::MockHTTP and also depend on
