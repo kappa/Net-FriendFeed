@@ -29,7 +29,7 @@ $frf->login('kappa');
 $frf->remotekey('shlyappa');
 
 ok(
-http_cmp(sub { $frf->add_comment('entry_1', 'haha!') },
+http_cmp(sub { $frf->add_comment('entry_1', 'haha!', 'Perl') },
     [
         method => 'POST',
         uri => methods(
@@ -37,6 +37,7 @@ http_cmp(sub { $frf->add_comment('entry_1', 'haha!') },
         ),
         as_string => re('entry=entry_1'),
         as_string => re('body=haha!'),
+        as_string => re('via=Perl'),
     ]
 ), 'add comment');
 
