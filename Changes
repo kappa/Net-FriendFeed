@@ -1,5 +1,9 @@
 Revision history for Net-FriendFeed
 
+0.85	Wed Jun 25 01:52:03 MSD 2008
+	Catch up. Support anonymous entries, 'via' for comments,
+	fetching multiple profiles, rooms in profiles.
+
 0.84	Sat May 31 18:10:45 MSD 2008
 	Defeat 5.10 compatibility issue which was actually a clash
 	between newer base.pm and Test::Deep::isa(). Thanks to
