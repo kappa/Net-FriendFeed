@@ -176,6 +176,7 @@ The feeds have the following structure (JSON-like notation is used):
           o published
           o updated
           o hidden - if true, this entry should be hidden based on the user's preferences
+          o anonymous - if true, user will be present but should not be shown 
           o user{} - the user who shared this entry
                 + id - the user's FriendFeed UUID
                 + name - the user's full name
@@ -711,12 +712,16 @@ The returned data has this structure:
           o iconUrl - the URL of the favicon for this service
           o profileUrl? - the user's profile URL on this service, if any
           o username? - the user's username for this service, if any 
-
-    * subscriptions[] - the user's this user is subscribed to
+    * subscriptions[] - the users this user is subscribed to
           o id
           o name
           o nickname
           o profileUrl 
+    * rooms[] - the rooms this user is a member of
+          o id - the room's FriendFeed UUID
+          o name - the room's display name
+          o nickname - the room's FriendFeed nickname, used in FriendFeed URLs
+          o url - the room's URL on FriendFeed
 
 =cut
 
@@ -725,6 +730,23 @@ sub fetch_user_profile {
     my $user = shift;
 
     $self->_fetch_feed("user/$user/profile", @_);
+}
+
+=head2 fetch_user_profiles(\@users)
+
+Returns profiles for multiple users. The returned structure has one
+element C<profiles> which is an array of profile structures described
+alongside C<fetch_user_profile> method. 
+
+User nicknames should be passed as an arrayref.
+
+=cut
+
+sub fetch_user_profiles {
+    my $self = shift;
+    my $users = shift;
+
+    $self->_fetch_feed('profiles', nickname => join(',', @$users), @_);
 }
 
 =head1 AUTHOR
@@ -770,13 +792,13 @@ L<http://search.cpan.org/dist/Net-FriendFeed>
 
 =head1 ACKNOWLEDGEMENTS
 
+Mark Carey prompted to implement C<via> for comments.
 
 =head1 COPYRIGHT & LICENSE
 
 Copyright 2008 Alex Kapranoff, all rights reserved.
 
 This program is released under the following license: GPLv3
-
 
 =cut
 
