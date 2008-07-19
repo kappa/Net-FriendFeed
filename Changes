@@ -1,5 +1,8 @@
 Revision history for Net-FriendFeed
 
+0.91	Sat Jul 19 22:06:35 MSD 2008
+	Implemet last_error method to report error conditions.
+
 0.9	Sat Jul 19 21:42:40 MSD 2008
 	Support new API calls: validate, list_services, fetch_entry,
 	(un)delete_entry, (un)hide_entry.

@@ -9,7 +9,7 @@ Net::FriendFeed - Perl interface to FriendFeed.com API
 
 =cut
 
-our $VERSION = '0.9';
+our $VERSION = '0.91';
 
 use Encode;
 use File::Spec;
@@ -19,7 +19,8 @@ use MIME::Base64 qw/encode_base64/;
 use URI::Escape;
 
 use base qw(Class::Accessor);
-Net::FriendFeed->mk_accessors(qw/login remotekey ua return_feeds_as/);
+Net::FriendFeed->mk_accessors(qw/login remotekey ua return_feeds_as
+    last_error/);
 
 our $API_ENTRYPOINT = 'http://friendfeed.com/api/';
 
@@ -57,6 +58,32 @@ only in API functions. A user can get his remotekey here:
 L<http://friendfeed.com/remotekey>
 
 Authentication is needed only to post or to read private feeds.
+
+=head2 last_error()
+
+Returns machine-readable code of the last error. You should consult
+this code if an API call returns C<undef>.
+
+This is a list of FriendFeed error codes:
+    * bad-id-format - Bad format for UUID argument.
+    * bad-url-format - Bad format for URL argument.
+    * entry-not-found - Entry with the specified UUID was not found.
+    * entry-required - Entry UUID argument is required.
+    * forbidden - User does not have access to entry, room or other entity specified in the request.
+    * image-format-not-supported - Unsupported image format.
+    * internal-server-error - Internal error on FriendFeed server.
+    * limit-exceeded - Request limit exceeded.
+    * room-not-found - Room with specified name not found.
+    * room-required - Room name argument is required.
+    * title-required - Entry title argument is required.
+    * unauthorized - The request requires authentication.
+    * user-not-found - User with specified nickname not found.
+    * user-required - User nickname argument is required.
+    * error - Other unspecified error.
+
+These error codes are generated inside Net::FriendFeed wrapper code:
+    * need-auth - The request was not made because it requires authentication.
+    * failed-req - The request was not made because of unknown reason.
 
 =cut
 
@@ -126,7 +153,10 @@ sub _http_req {
     my ($self, $method, $uri, $needauth, @args) = @_;
 
     # all posts should be authenticated
-    return if $needauth && !$self->_has_auth;
+    if ($needauth && !$self->_has_auth) {
+        $self->last_error('need-auth');
+        return;
+    }
 
     $self->_connect();
 
@@ -152,8 +182,21 @@ sub _http_req {
         $req->header(Authorization => 'Basic ' . encode_base64($self->login . ':' . $self->remotekey, q{}));
     }
 
-    ($Last_Http_Response = $self->ua->request($req)) && $Last_Http_Response->is_success
-        or return;
+    if ($Last_Http_Response = $self->ua->request($req)) {
+        unless ($Last_Http_Response->is_success) {
+            require JSON;       # should die if absent
+            JSON->VERSION(2.0); # we need newer JSON
+            # do some JSON magic
+            $self->last_error(
+                JSON::from_json($Last_Http_Response->content, { utf8 => 1})->{errorCode}
+            );
+            return;
+        }
+    }
+    else {
+        $self->last_error('failed-req');
+        return;
+    }
 
     if ($needs_parsing) {
         require JSON;       # should die if absent

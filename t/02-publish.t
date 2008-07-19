@@ -7,7 +7,7 @@ use utf8;   # strings in Russian present
 use Encode;
 use URI::Escape qw/uri_escape_utf8/;
 
-use Test::More tests => 32;
+use Test::More tests => 34;
 use Test::NoWarnings;
 use Test::Deep;
 use Test::MockHTTP;
@@ -26,6 +26,7 @@ http_test_setup { $frf->ua($_[0]) };
 ok(!$frf->_has_auth, 'no auth present');
 
 ok(!$frf->publish_message('Hello there!'), 'EPERM, need auth');
+is($frf->last_error, 'need-auth');
 
 $frf->login('kappa');
 
@@ -153,5 +154,7 @@ ok(
     [
         as_string => re('title=Hello\+there!'),
     ], undef,
-    HTTP::Response->new(500, 'Hehe'),
+    HTTP::Response->new(500, 'some error', undef, '{ "errorCode": "error-kap"}'),
 ), 'bad response');
+
+is($frf->last_error, 'error-kap');
