@@ -9,7 +9,7 @@ Net::FriendFeed - Perl interface to FriendFeed.com API
 
 =cut
 
-our $VERSION = '0.85';
+our $VERSION = '0.9';
 
 use Encode;
 use File::Spec;
@@ -74,6 +74,21 @@ sub new {
     bless $self, $class;
 }
 
+=head2 login([$login])
+
+Read/Write accessor for login name. You can either get current login
+or set it if you'd like to do it after calling C<new()>.
+
+=head2 remotekey([$remotekey])
+
+Read/Write accessor for remotekey. You can either get current remotekey
+or set it if you'd like to do it after calling C<new()>.
+
+Remotekey is a special password valid only for use via API calls.
+A user can get his remotekey here: L<http://friendfeed.com/remotekey>
+
+=cut
+
 sub _connect {
     my $self = shift;
 
@@ -87,6 +102,17 @@ sub _has_auth {
     my $self = shift;
 
     return $self->login && $self->remotekey;
+}
+
+=head2 validate()
+
+Validates the current combination of login and remotekey.
+
+=cut
+
+sub validate {
+    my $self = shift;
+    $self->_http_req('GET', 'validate', 'need auth');
 }
 
 sub _api_url {
@@ -152,6 +178,26 @@ sub _post {
     my $uri = shift;
 
     $self->_http_req('POST', $uri, 'need auth', @_);
+}
+
+=head2 list_services
+
+Returns the list of all services supported by FriendFeed.
+
+The returned JSON has the format:
+
+    * services[]
+          o url - the official URL of the service, e.g., http://picasaweb.google.com/
+          o iconUrl - the URL of the favicon for this service
+          o id - the service's FriendFeed ID, e.g., "picasa"
+          o name - the service's official name, e.g., "Picasa Web Albums"
+
+=cut
+
+sub list_services {
+    my $self = shift;
+
+    $self->_fetch_feed('services', @_);
 }
 
 =head1 FEED FUNCTIONS
@@ -374,6 +420,20 @@ sub fetch_home_feed {
         $self->_fetch_feed('feed/home', @_);
 }
 
+=head2 fetch_entry($uuid)
+
+Fetches a single entry by its UUID. Needs authentication to read
+private entries.
+
+=cut
+
+sub fetch_entry {
+    my $self = shift;
+    my $entry_id = shift;
+
+    $self->_fetch_feed('feed/entry/' . uri_escape($entry_id));
+}
+
 =head2 search($query)
 
 Executes a search over the entries in FriendFeed. If the request is
@@ -526,6 +586,96 @@ sub publish_message {
     my $msg = shift;
 
     $self->publish_link($msg);
+}
+
+=head2 delete_entry($entry)
+
+Delete an entry. The arguments are:
+
+=over
+
+=item $entry
+
+required - The FriendFeed UUID of the entry.
+
+=back
+
+=cut
+
+sub delete_entry {
+    my $self = shift;
+    my ($entry) = @_;
+
+    $self->_post('entry/delete', [entry => $entry]);
+}
+
+=head2 undelete_entry($entry)
+
+Undelete a deleted entry. The arguments are:
+
+=over
+
+=item $entry
+
+required - The FriendFeed UUID of the entry.
+
+=back
+
+=cut
+
+sub undelete_entry {
+    my $self = shift;
+    my ($entry) = @_;
+
+    $self->_post('entry/delete', [
+        entry       => $entry,
+        undelete    => 1,
+    ]);
+}
+
+=head2 hide_entry($entry)
+
+Hides an entry for current user. The arguments are:
+
+=over
+
+=item $entry
+
+required - The FriendFeed UUID of the entry.
+
+=back
+
+=cut
+
+sub hide_entry {
+    my $self = shift;
+    my ($entry) = @_;
+
+    $self->_post('entry/hide', [entry => $entry]);
+}
+
+=head2 unhide_entry($entry)
+
+Unhide a hidden entry. The arguments are:
+
+=over
+
+=item $entry
+
+required - The FriendFeed UUID of the entry.
+
+=back
+
+=cut
+
+sub unhide_entry {
+    my $self = shift;
+    my ($entry) = @_;
+
+    $self->_post('entry/hide', [
+        entry       => $entry,
+        unhide    => 1,
+    ]);
 }
 
 =head1 COMMENT AND LIKE FUNCTIONS

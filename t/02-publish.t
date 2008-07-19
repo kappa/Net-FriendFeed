@@ -7,7 +7,7 @@ use utf8;   # strings in Russian present
 use Encode;
 use URI::Escape qw/uri_escape_utf8/;
 
-use Test::More qw/no_plan/;
+use Test::More tests => 32;
 use Test::NoWarnings;
 use Test::Deep;
 use Test::MockHTTP;
@@ -19,7 +19,7 @@ our $API_EP = $Net::FriendFeed::API_ENTRYPOINT = 'http://kapranoff.ru/api/';
 
 my $frf = new Net::FriendFeed;
 
-can_ok($frf, qw/publish_message publish_link/);
+can_ok($frf, qw/publish_message publish_link login remotekey validate/);
 
 http_test_setup { $frf->ua($_[0]) };
 
@@ -34,6 +34,15 @@ ok(!$frf->publish_message('Hello there!'), 'EPERM, need more auth');
 $frf->remotekey('shlyappa');
 
 ok($frf->_has_auth, 'auth');
+
+ok(
+http_cmp(sub { $frf->validate() },
+    [
+        method => 'GET',
+        uri => methods(as_string => re('validate$')),
+        [qw/header Authorization/] => re('Basic \w+'),
+    ]
+), 'validate');
 
 my $pub_rv;
 
