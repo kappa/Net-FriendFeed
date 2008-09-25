@@ -399,7 +399,7 @@ sub fetch_user_likes_feed {
     $self->_fetch_feed('feed/user/' . uri_escape($nickname) . '/likes', @_);
 }
 
-=head2 fetch_user_discussion_feed($user)
+=head2 fetch_user_discussion_feed($nickname)
 
 Returns the most recent entries the user has commented on or "liked".
 
@@ -410,6 +410,21 @@ sub fetch_user_discussion_feed {
     my $nickname = shift;
 
     $self->_fetch_feed('feed/user/' . uri_escape($nickname) . '/discussion', @_);
+}
+
+=head2 fetch_user_friends_feed($nickname)
+
+Fetch a users "friends" feed.  This feed contains entries
+from the user and her friends.  No private feeds will be included
+unless you are authenticated and have access to that feed.
+
+=cut
+
+sub fetch_user_friends_feed {
+    my $self = shift;
+    my $nickname = shift;
+
+    $self->_fetch_feed('feed/user/' . uri_escape($nickname) . '/friends', @_);
 }
 
 =head2 fetch_multi_user_feed(@nicknames)
