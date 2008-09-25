@@ -3,7 +3,7 @@
 use warnings;
 use strict;
 
-use Test::More qw/no_plan/;
+use Test::More tests => 8;
 use Test::NoWarnings;
 use Test::Deep;
 use Test::MockHTTP;
@@ -31,6 +31,17 @@ http_cmp(sub { $frf->fetch_user_profile('kkapp') },
         ),
     ]
 ), 'user profile feed');
+
+ok(
+http_cmp(sub { $frf->fetch_user_profiles(qw/kkapp mihun/) },
+    [
+        method => 'GET',
+        uri => methods(
+            path => re('profiles$'),
+            ['query_param', 'nickname'], 'kkapp,mihun',
+        ),
+    ]
+), 'multi user profiles feed w/o arrayref');
 
 ok(
 http_cmp(sub { $frf->fetch_user_profiles(['kkapp', 'mihun']) },

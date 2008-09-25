@@ -3,7 +3,7 @@
 use warnings;
 use strict;
 
-use Test::More tests => 12;
+use Test::More tests => 14;
 use Test::NoWarnings;
 use Test::Deep;
 use Test::MockHTTP;
@@ -78,3 +78,14 @@ http_cmp(sub { $frf->unhide_entry('entry_1') },
         as_string => re('unhide=1'),
     ]
 ), 'unhide entry');
+
+ok(
+http_cmp(sub { $frf->fetch_entry('88', '99', 'AA') },
+    [
+        uri => methods(
+            path => re('feed/entry$'),
+        ),
+        as_string => re('entry_id=88%2C99%2CAA'),   # %2C eq ','
+    ]
+), 'fetch multiple entries');
+

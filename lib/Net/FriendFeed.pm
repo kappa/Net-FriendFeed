@@ -9,7 +9,7 @@ Net::FriendFeed - Perl interface to FriendFeed.com API
 
 =cut
 
-our $VERSION = '0.91';
+our $VERSION = '0.93';
 
 use Encode;
 use File::Spec;
@@ -359,7 +359,7 @@ sub fetch_public_feed {
     $self->_fetch_feed('feed/public', @_);
 }
 
-=head2 fetch_user_feed($user)
+=head2 fetch_user_feed($nickname)
 
 Fetches the most recent entries from a user feed.
 If the user has a private feed, authentication is required.
@@ -368,12 +368,12 @@ If the user has a private feed, authentication is required.
 
 sub fetch_user_feed {
     my $self = shift;
-    my $user = shift;
+    my $nickname = shift;
 
-    $self->_fetch_feed('feed/user/' . uri_escape($user), @_);
+    $self->_fetch_feed('feed/user/' . uri_escape($nickname), @_);
 }
 
-=head2 fetch_user_comments_feed($user)
+=head2 fetch_user_comments_feed($nickname)
 
 Returns the most recent entries the user has commented on, ordered by the date of that user's comments. 
 
@@ -381,12 +381,12 @@ Returns the most recent entries the user has commented on, ordered by the date o
 
 sub fetch_user_comments_feed {
     my $self = shift;
-    my $user = shift;
+    my $nickname = shift;
 
-    $self->_fetch_feed('feed/user/' . uri_escape($user) . '/comments', @_);
+    $self->_fetch_feed('feed/user/' . uri_escape($nickname) . '/comments', @_);
 }
 
-=head2 fetch_user_likes_feed($user)
+=head2 fetch_user_likes_feed($nickname)
 
 Returns the most recent entries the user has "liked," ordered by the date of that user's "likes".
 
@@ -394,9 +394,9 @@ Returns the most recent entries the user has "liked," ordered by the date of tha
 
 sub fetch_user_likes_feed {
     my $self = shift;
-    my $user = shift;
+    my $nickname = shift;
 
-    $self->_fetch_feed('feed/user/' . uri_escape($user) . '/likes', @_);
+    $self->_fetch_feed('feed/user/' . uri_escape($nickname) . '/likes', @_);
 }
 
 =head2 fetch_user_discussion_feed($user)
@@ -407,12 +407,12 @@ Returns the most recent entries the user has commented on or "liked".
 
 sub fetch_user_discussion_feed {
     my $self = shift;
-    my $user = shift;
+    my $nickname = shift;
 
-    $self->_fetch_feed('feed/user/' . uri_escape($user) . '/discussion', @_);
+    $self->_fetch_feed('feed/user/' . uri_escape($nickname) . '/discussion', @_);
 }
 
-=head2 fetch_multi_user_feed(\@users)
+=head2 fetch_multi_user_feed(@nicknames)
 
 Returns the most recent entries from a list of users, specified by nickname:
 
@@ -420,17 +420,20 @@ If more than one nickname is specified, the feed most recent entries
 from all of the given users. If any one of the users has a private
 feed, authentication is required.
 
-User nicknames should be passed as an arrayref.
+User nicknames may also be passed as an arrayref.
 
-    $frf->fetch_multi_user_feed([qw/kkapp mihun/]);
+    $frf->fetch_multi_user_feed(qw/kkapp mihun/);
 
 =cut
 
 sub fetch_multi_user_feed {
     my $self = shift;
-    my $users = shift;
+    my @nicknames = @_;
 
-    $self->_fetch_feed('feed/user', nickname => join(',', @$users), @_);
+    ref $nicknames[0] eq 'ARRAY'
+        and @nicknames = @{$nicknames[0]};
+
+    $self->_fetch_feed('feed/user', nickname => join(',', @nicknames), @_);
 }
 
 =head2 fetch_room_feed($room)
@@ -463,18 +466,27 @@ sub fetch_home_feed {
         $self->_fetch_feed('feed/home', @_);
 }
 
-=head2 fetch_entry($uuid)
+=head2 fetch_entry($uuid[, @uuids])
 
-Fetches a single entry by its UUID. Needs authentication to read
+Fetches a single or a list of entries by UUIDs. Needs authentication to read
 private entries.
+
+You can request up to 100 entries on each call. The entries you don't
+have permission to read will be filtered out from the result feed.
 
 =cut
 
 sub fetch_entry {
     my $self = shift;
-    my $entry_id = shift;
+    my @entry_ids = @_;
 
-    $self->_fetch_feed('feed/entry/' . uri_escape($entry_id));
+    if (@entry_ids == 1) {
+        $self->_fetch_feed('feed/entry/' . uri_escape($entry_ids[0]));
+    }
+    else {
+        $self->_fetch_feed('feed/entry', entry_id =>
+            Encode::encode('UTF-8', join(',', @entry_ids)));
+    }
 }
 
 =head2 search($query)
@@ -631,13 +643,13 @@ sub publish_message {
     $self->publish_link($msg);
 }
 
-=head2 delete_entry($entry)
+=head2 delete_entry($entry_id)
 
 Delete an entry. The arguments are:
 
 =over
 
-=item $entry
+=item $entry_id
 
 required - The FriendFeed UUID of the entry.
 
@@ -647,18 +659,18 @@ required - The FriendFeed UUID of the entry.
 
 sub delete_entry {
     my $self = shift;
-    my ($entry) = @_;
+    my $entry_id = shift;
 
-    $self->_post('entry/delete', [entry => $entry]);
+    $self->_post('entry/delete', [entry => $entry_id]);
 }
 
-=head2 undelete_entry($entry)
+=head2 undelete_entry($entry_id)
 
 Undelete a deleted entry. The arguments are:
 
 =over
 
-=item $entry
+=item $entry_id
 
 required - The FriendFeed UUID of the entry.
 
@@ -668,21 +680,21 @@ required - The FriendFeed UUID of the entry.
 
 sub undelete_entry {
     my $self = shift;
-    my ($entry) = @_;
+    my $entry_id = shift;
 
     $self->_post('entry/delete', [
-        entry       => $entry,
+        entry       => $entry_id,
         undelete    => 1,
     ]);
 }
 
-=head2 hide_entry($entry)
+=head2 hide_entry($entry_id)
 
 Hides an entry for current user. The arguments are:
 
 =over
 
-=item $entry
+=item $entry_id
 
 required - The FriendFeed UUID of the entry.
 
@@ -692,18 +704,18 @@ required - The FriendFeed UUID of the entry.
 
 sub hide_entry {
     my $self = shift;
-    my ($entry) = @_;
+    my $entry_id = shift;
 
-    $self->_post('entry/hide', [entry => $entry]);
+    $self->_post('entry/hide', [entry => $entry_id]);
 }
 
-=head2 unhide_entry($entry)
+=head2 unhide_entry($entry_id)
 
 Unhide a hidden entry. The arguments are:
 
 =over
 
-=item $entry
+=item $entry_id
 
 required - The FriendFeed UUID of the entry.
 
@@ -713,23 +725,23 @@ required - The FriendFeed UUID of the entry.
 
 sub unhide_entry {
     my $self = shift;
-    my ($entry) = @_;
+    my $entry_id = shift;
 
     $self->_post('entry/hide', [
-        entry       => $entry,
+        entry       => $entry_id,
         unhide    => 1,
     ]);
 }
 
 =head1 COMMENT AND LIKE FUNCTIONS
 
-=head2 add_comment($entry, $body, $via)
+=head2 add_comment($entry_id, $body, $via)
 
 Add a comment on a FriendFeed entry. The arguments are:
 
 =over
 
-=item $entry
+=item $entry_id
 
 required - The FriendFeed UUID of the entry to which this comment is attached.
 
@@ -750,18 +762,18 @@ register it with FriendFeed administration.
 
 sub add_comment {
     my $self = shift;
-    my ($entry, $comment_text, $via) = @_;
+    my ($entry_id, $comment_text, $via) = @_;
 
-    $self->_post('comment', [entry => $entry, body => Encode::encode('UTF-8', $comment_text), defined $via ? (via => $via) : ()]);
+    $self->_post('comment', [entry => $entry_id, body => Encode::encode('UTF-8', $comment_text), defined $via ? (via => $via) : ()]);
 }
 
-=head2 edit_comment($entry, $body, $comment)
+=head2 edit_comment($entry_id, $body, $comment_id)
 
 Edit an existing comment on a FriendFeed entry. The arguments are:
 
 =over
 
-=item $entry
+=item $entry_id
 
 required - The FriendFeed UUID of the entry to which this comment is attached.
 
@@ -769,7 +781,7 @@ required - The FriendFeed UUID of the entry to which this comment is attached.
 
 required - The textual body of the comment.
 
-=item $comment
+=item $comment_id
 
 The FriendFeed UUID of the comment to edit. If not given, the request will create a new comment. 
 
@@ -779,26 +791,26 @@ The FriendFeed UUID of the comment to edit. If not given, the request will creat
 
 sub edit_comment {
     my $self = shift;
-    my ($entry, $comment_text, $comment_id) = @_;
+    my ($entry_id, $comment_text, $comment_id) = @_;
 
     $self->_post('comment', [
-        entry   => $entry,
+        entry   => $entry_id,
         comment => $comment_id,
         body    => Encode::encode('UTF-8', $comment_text),
     ]);
 }
 
-=head2 delete_comment($entry, $comment)
+=head2 delete_comment($entry_id, $comment_id)
 
 Delete an existing comment. The arguments are:
 
 =over
 
-=item $entry
+=item $entry_id
 
 required - The FriendFeed UUID of the entry to which this comment is attached.
 
-=item $comment
+=item $comment_id
 
 required - The FriendFeed UUID of the comment to delete. 
 
@@ -808,22 +820,22 @@ required - The FriendFeed UUID of the comment to delete.
 
 sub delete_comment {
     my $self = shift;
-    my ($entry, $comment_id) = @_;
+    my ($entry_id, $comment_id) = @_;
 
-    $self->_post('comment/delete', [entry => $entry, comment => $comment_id]);
+    $self->_post('comment/delete', [entry => $entry_id, comment => $comment_id]);
 }
 
-=head2 undelete_comment($entry, $comment)
+=head2 undelete_comment($entry_id, $comment_id)
 
 Undelete a deleted comment. The arguments are:
 
 =over
 
-=item $entry
+=item $entry_id
 
 required - The FriendFeed UUID of the entry to which this comment is attached.
 
-=item $comment
+=item $comment_id
 
 required - The FriendFeed UUID of the comment to undelete. 
 
@@ -833,22 +845,22 @@ required - The FriendFeed UUID of the comment to undelete.
 
 sub undelete_comment {
     my $self = shift;
-    my ($entry, $comment_id) = @_;
+    my ($entry_id, $comment_id) = @_;
 
     $self->_post('comment/delete', [
-        entry       => $entry,
+        entry       => $entry_id,
         comment     => $comment_id,
         undelete    => 1,
     ]);
 }
 
-=head2 add_like($entry)
+=head2 add_like($entry_id)
 
 Add a "Like" to a FriendFeed entry for the authenticated user.
 
 =over
 
-=item $entry
+=item $entry_id
 
 required - The FriendFeed UUID of the entry to which this comment is attached
 
@@ -860,18 +872,18 @@ required - The FriendFeed UUID of the entry to which this comment is attached
 
 sub add_like {
     my $self = shift;
-    my $entry = shift;
+    my $entry_id = shift;
 
-    $self->_post('like', [entry => $entry]);
+    $self->_post('like', [entry => $entry_id]);
 }
 
-=head2 delete_like($entry)
+=head2 delete_like($entry_id)
 
 Delete an existing "Like". The arguments are:
 
 =over
 
-=item $entry
+=item $entry_id
 
 required - The FriendFeed UUID of the entry to which this comment is attached.
 
@@ -881,14 +893,14 @@ required - The FriendFeed UUID of the entry to which this comment is attached.
 
 sub delete_like {
     my $self = shift;
-    my $entry = shift;
+    my $entry_id = shift;
 
-    $self->_post('like/delete', [entry => $entry]);
+    $self->_post('like/delete', [entry => $entry_id]);
 }
 
 =head1 PROFILE FUNCTIONS
 
-=head2 fetch_user_profile($user)
+=head2 fetch_user_profile($nickname)
 
 Returns list of all of the user's subscriptions (people) and services connected to their account.
 
@@ -920,26 +932,29 @@ The returned data has this structure:
 
 sub fetch_user_profile {
     my $self = shift;
-    my $user = shift;
+    my $nickname = shift;
 
-    $self->_fetch_feed("user/$user/profile", @_);
+    $self->_fetch_feed('user/' . uri_escape($nickname) . '/profile', @_);
 }
 
-=head2 fetch_user_profiles(\@users)
+=head2 fetch_user_profiles(@nicknames)
 
 Returns profiles for multiple users. The returned structure has one
 element C<profiles> which is an array of profile structures described
 alongside C<fetch_user_profile> method. 
 
-User nicknames should be passed as an arrayref.
+User nicknames may also be passed as an arrayref.
 
 =cut
 
 sub fetch_user_profiles {
     my $self = shift;
-    my $users = shift;
+    my @nicknames = @_;
 
-    $self->_fetch_feed('profiles', nickname => join(',', @$users), @_);
+    ref $nicknames[0] eq 'ARRAY'
+        and @nicknames = @{$nicknames[0]};
+
+    $self->_fetch_feed('profiles', nickname => join(',', @nicknames), @_);
 }
 
 =head1 AUTHOR
