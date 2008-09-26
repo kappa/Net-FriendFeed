@@ -731,43 +731,14 @@ sub publish_link {
     my $self = shift;
     my ($msg, $link, $comment, $imgs, $room, $via) = @_;
 
-    my @args = ();
-
-    push @args, title => Encode::encode('UTF-8', $msg);
-    push @args, 'link' => $link if defined $link;
-    push @args, comment => Encode::encode('UTF-8', $comment) if defined $comment;
-    push @args, room => $room if defined $room;
-    push @args, via => $via if defined $via;
-
-    my $multipart;
-
-    if ($imgs && ref $imgs eq 'ARRAY') {
-        foreach (0 .. $#$imgs) {
-            if (ref $imgs->[$_]) { # image AND link
-
-                if ($imgs->[$_]->[0] =~ m{^(?:http|https|ftp)://}) { # remote image
-                    push @args, ("image${_}_url" => $imgs->[$_]->[0], "image${_}_link" => $imgs->[$_]->[1]);
-                }
-                else {
-                    $multipart = 1;
-                    my $filename = (File::Spec->splitpath($imgs->[$_]->[0]))[2]; # kinda basename
-                    push @args, ("image${_}" => [$imgs->[$_]->[0], $filename], "${filename}_link" => $imgs->[$_]->[1]);
-                }
-            }
-            else {
-                if ($imgs->[$_] =~ m{^(?:http|https|ftp)://}) { # remote image
-                    push @args, ("image${_}_url" => $imgs->[$_]);
-                }
-                else {
-                    $multipart = 1;
-                    push @args, ("image${_}" => [$imgs->[$_]]);
-                }
-            }
-        }
-    }
-
-    $self->_post('share', Content => \@args,
-        $multipart ? (Content_Type => 'form-data') : ());
+    $self->publish(
+        message     => $msg,
+        link        => $link,
+        comment     => $comment,
+        images      => $imgs,
+        room        => $room,
+        via         => $via,
+    );
 }
 
 =head2 publish_message($msg)
@@ -785,7 +756,7 @@ sub publish_message {
     my $self = shift;
     my $msg = shift;
 
-    $self->publish_link($msg);
+    $self->publish($msg);
 }
 
 =head2 delete_entry($entry_id)
