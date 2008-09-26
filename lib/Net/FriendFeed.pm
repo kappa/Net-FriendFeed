@@ -9,7 +9,7 @@ Net::FriendFeed - Perl interface to FriendFeed.com API
 
 =cut
 
-our $VERSION = '0.93';
+our $VERSION = '0.99';
 
 use Encode;
 use File::Spec;
@@ -550,7 +550,135 @@ please let us know in the developer forum.
 
 =cut
 
+=head2 publish($message) OR publish(named params)
+
+Post a message with a title, images, audios and other possible options.
+Requires authentication.
+
+All non-ASCII input data should be clean Perl Unicode (that is, decoded from
+any encoding). FriendFeed API is strictly UTF-8 so we unconditionally
+encode strings into UTF-8 via Encode::encode('UTF-8', $data) call.
+
+In its non-trivial (more than 1 argument) this method uses named parameters.
+A call looks like this:
+
+    $frf->publish(
+        message => 'Message test',
+        link    => 'http://link.example.com,
+        images  => [ @images ],
+        audios  => [ @audios ],
+        room    => 'Room 1',
+        via     => 'Perl!',
+        comment => 'Hi there',
+    );
+
+The parameters are:
+
+=over
+
+=item message
+
+Mandatory title of the posted item.
+
+=item link
+
+URL to refer to. May be absent.
+
+=item comment
+
+Automatically add first comment to the item.
+
+=item images
+
+This one is an arrayref of image items. Each image item is either an image PURL (path-or-URL) or a
+pair (taken as arrayrefs of two elements) of PURL => URL. PURL in the
+pair points to the image and URL is used as a href to follow when the
+user clicks on this very image. URL defaults to the main link.
+
+Each PURL may be either an (http|https|ftp) URL or a PATH to a local
+file in which case that file gets uploaded directly to FriendFeed.
+
+=item audios
+
+This one is an arrayref of audio items. Each audio item is either an audio URL or a
+pair (taken as arrayrefs of two elements) of URL => title. URL in the
+pair points to the audio and title is shown near the audio player on
+FriendFeed pages.
+
+FriendFeed supports only MP3 audios.
+
+=item room
+
+This is a room nickname to which the post should be published.
+
+=item via
+
+This is an identifier of your software. It's ignored unless you
+register it with FriendFeed administration.
+
+=back
+
+=cut
+
+sub publish {
+    my $self = shift;
+    my %args = @_ < 2 ? ( message => $_[0] ) : @_;
+
+    my @args = ();
+
+    push @args, title => Encode::encode('UTF-8', $args{message});
+    push @args, 'link' => $args{link} if defined $args{link};
+    push @args, comment => Encode::encode('UTF-8', $args{comment}) if defined $args{comment};
+    push @args, room => $args{room} if defined $args{room};
+    push @args, via => $args{via} if defined $args{via};
+
+    my $multipart;
+
+    my $imgs = $args{images};
+    if ($imgs && ref $imgs eq 'ARRAY') {
+        foreach (0 .. $#$imgs) {
+            if (ref $imgs->[$_]) { # image AND link
+
+                if ($imgs->[$_]->[0] =~ m{^(?:http|https|ftp)://}) { # remote image
+                    push @args, ("image${_}_url" => $imgs->[$_]->[0], "image${_}_link" => $imgs->[$_]->[1]);
+                }
+                else {
+                    $multipart = 1;
+                    my $filename = (File::Spec->splitpath($imgs->[$_]->[0]))[2]; # kinda basename
+                    push @args, ("image${_}" => [$imgs->[$_]->[0], $filename], "${filename}_link" => $imgs->[$_]->[1]);
+                }
+            }
+            else {
+                if ($imgs->[$_] =~ m{^(?:http|https|ftp)://}) { # remote image
+                    push @args, ("image${_}_url" => $imgs->[$_]);
+                }
+                else {
+                    $multipart = 1;
+                    push @args, ("image${_}" => [$imgs->[$_]]);
+                }
+            }
+        }
+    }
+
+    my $audios = $args{audios};
+    if ($audios && ref $audios eq 'ARRAY') {
+        foreach (0 .. $#$audios) {
+            if (ref $audios->[$_]) { # mp3 AND title
+                push @args, ("audio${_}_url" => $audios->[$_]->[0], "audio${_}_title" => Encode::encode('UTF-8', $audios->[$_]->[1]));
+            }
+            else {
+                push @args, ("audio${_}_url" => $audios->[$_]);
+            }
+        }
+    }
+
+    $self->_post('share', Content => \@args,
+        $multipart ? (Content_Type => 'form-data') : ());
+}
+
 =head2 publish_link($title, $link, $comment, [@images, [$imgN, $linkN]], $room, $via)
+
+I<This method is obsolete, use C<publish>>.
 
 Share a link with a title, images and other possible options.
 Requires authentication.
@@ -568,13 +696,13 @@ Full signature looks like:
 
 Mandatory title of the shared item.
 
-=item $links
+=item $link
 
 URL to refer to. If absent, the shared link reduces to text.
 
 =item $comment
 
-Automatically add 1st comment to the item.
+Automatically add first comment to the item.
 
 =item $images
 
@@ -643,6 +771,8 @@ sub publish_link {
 }
 
 =head2 publish_message($msg)
+
+I<This method is obsolete, use C<publish>>.
 
 Share a piece of text. The simplest form of FriendFeed sharing.
 Requires authentication.

@@ -1,8 +1,3 @@
-1. New universal publishing method publish() with named args.
-
-2. audio publishing via publish().
-    http://code.google.com/p/friendfeed-api/wiki/ApiDocumentation#Create_New_Entries
-
 4. It appears that we do support this feature but it was not documented.  An example: http://friendfeed.com/api/feed/user?emails=bgolub@benjamingolub.com
 5. 
    1. http://beta.friendfeed.com/api/user/nickname/profile - now includes list information if you are currently authenticated as the profile you are requesting.

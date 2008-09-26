@@ -12,6 +12,7 @@ scripts/share.pl
 t/00-load.t
 t/01-new.t
 t/02-publish.t
+t/02a-publish2.t
 t/03-feeds.t
 t/04-comments.t
 t/05-entries.t
@@ -19,3 +20,4 @@ t/06-profile.t
 t/boilerplate.t
 t/pod-coverage.t
 t/pod.t
+TODO

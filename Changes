@@ -1,9 +1,14 @@
 Revision history for Net-FriendFeed
 
+0.99    Fri Sep 26 19:58:17 MSD 2008
+    Implement new universal publish() method.
+    Obsolete old publish_link() and publish().
+    Support mp3 publishing.
+
 0.93    Fri Sep 26 01:11:38 MSD 2008
-        Support multiple entries fetching via UUIDs.
-        Some (compatible) interface and doc cleanups.
-        Implement fetch_user_friends_feed().
+    Support multiple entries fetching via UUIDs.
+    Some (compatible) interface and doc cleanups.
+    Implement fetch_user_friends_feed().
 
 0.91	Sat Jul 19 22:06:35 MSD 2008
 	Implemet last_error method to report error conditions.
