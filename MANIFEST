@@ -18,7 +18,6 @@ t/04-comments.t
 t/05-entries.t
 t/06-lists.t
 t/06-profile.t
-t/boilerplate.t
 t/pod-coverage.t
 t/pod.t
 TODO
