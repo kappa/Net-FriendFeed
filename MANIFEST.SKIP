@@ -4,4 +4,4 @@
 ~$
 \.bak$
 ^MANIFEST\.SKIP$
-.hg
+\^.hg

@@ -94,10 +94,8 @@ sub new {
     $fields = {} unless defined $fields;
 
     my $self = { %$fields };
-
     $self->{return_feeds_as} ||= 'structure';
 
-    # make a copy of $fields.
     bless $self, $class;
 }
 
@@ -131,7 +129,7 @@ sub _has_auth {
     return $self->login && $self->remotekey;
 }
 
-=head2 validate()
+=head2 validate
 
 Validates the current combination of login and remotekey.
 
@@ -1113,14 +1111,13 @@ L<http://search.cpan.org/dist/Net-FriendFeed>
 
 =back
 
-
 =head1 ACKNOWLEDGEMENTS
 
 Mark Carey prompted to implement C<via> for comments.
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2008 Alex Kapranoff, all rights reserved.
+Copyright 2008 Alex Kapranoff.
 
 This program is released under the following license: GPLv3
 
