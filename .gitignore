@@ -1,4 +1,3 @@
-syntax: glob
 blib*
 Makefile
 Makefile.old
