@@ -9,7 +9,7 @@ Net::FriendFeed - Perl interface to FriendFeed.com API
 
 =cut
 
-our $VERSION = '0.99';
+our $VERSION = '2.01';
 
 use Encode;
 use File::Spec;
@@ -17,12 +17,14 @@ use HTTP::Request::Common;
 use LWP::UserAgent;
 use MIME::Base64 qw/encode_base64/;
 use URI::Escape;
+use Carp;
 
 use base qw(Class::Accessor);
 Net::FriendFeed->mk_accessors(qw/login remotekey ua return_feeds_as
     last_error/);
 
-our $API_ENTRYPOINT = 'http://friendfeed.com/api/';
+our $API1_ENTRYPOINT = 'http://friendfeed.com/api/';
+our $API_ENTRYPOINT = 'http://friendfeed-api.com/v2/';
 
 our $Last_Http_Response;
 
@@ -229,7 +231,7 @@ The returned JSON has the format:
 
     * services[]
           o url - the official URL of the service, e.g., http://picasaweb.google.com/
-          o iconUrl - the URL of the favicon for this service
+          o icon - the URL of the favicon for this service
           o id - the service's FriendFeed ID, e.g., "picasa"
           o name - the service's official name, e.g., "Picasa Web Albums"
 

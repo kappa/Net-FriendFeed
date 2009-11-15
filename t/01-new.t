@@ -31,7 +31,7 @@ http_cmp(sub { $frf->list_services() },
     [
         method => 'GET',
         uri => methods(
-            as_string => re('services$'),
+            as_string => re('/services$'),
         ),
     ]
 ), 'list services');
