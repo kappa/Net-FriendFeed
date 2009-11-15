@@ -20,7 +20,6 @@ my $builder = Module::Build->new(
         'Encode' => 0,
         'LWP::UserAgent' => 0,
         'HTTP::Request::Common' => 0,
-        'Class::Accessor' => 0,
         'URI' => 0,
         'JSON' => 2.0,
     },

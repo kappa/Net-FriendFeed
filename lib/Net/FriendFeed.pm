@@ -19,9 +19,7 @@ use MIME::Base64 qw/encode_base64/;
 use URI::Escape;
 use Carp;
 
-use base qw(Class::Accessor);
-Net::FriendFeed->mk_accessors(qw/login remotekey ua return_feeds_as
-    last_error/);
+#Net::FriendFeed->mk_accessors(qw/login remotekey ua return_feeds_as last_error/);
 
 our $API1_ENTRYPOINT = 'http://friendfeed.com/api/';
 our $API_ENTRYPOINT = 'http://friendfeed-api.com/v2/';
@@ -45,7 +43,7 @@ Methods are named in accordance with the official Python package.
 
 =head1 GENERAL FUNCTIONS
 
-=head2 new(\%opts)
+=head2 new(\%opts) or new(%opts)
 
 This is a constructor for FriendFeed object. It takes an optional
 hashref parameter with auth credentials.
@@ -53,6 +51,7 @@ hashref parameter with auth credentials.
 Example:
 
     my $frf_anon = Net::FriendFeed->new;
+    my $frf = Net::FriendFeed->new(login => 'kkapp', remotekey => 'hfytr38');
     my $frf = Net::FriendFeed->new({login => 'kkapp', remotekey => 'hfytr38'});
 
 The remotekey is a kind of easily regeneratable password used
@@ -90,13 +89,23 @@ These error codes are generated inside Net::FriendFeed wrapper code:
 =cut
 
 sub new {
-    my ($proto, $fields) = @_;
+    my ($proto, @opts) = @_;
     my $class = ref $proto || $proto;
 
-    $fields = {} unless defined $fields;
+    my $fields;
+    if (@opts % 2 == 0) {   # also catches calls w/o args
+        $fields = { @opts };
+    }
+    elsif (ref $opts[0] eq 'HASH') {
+        $fields = $opts[0];
+    }
+    else {
+        croak "Incorrect arguments to new(). Pass either a hashref or a list of pairs.\n";
+    }
 
-    my $self = bless { %$fields }, $class;
-    $self->return_feeds_as($fields->{return_feeds_as});
+    my $self = bless {}, $class;
+    @{$self}{qw/login remotekey/} = @{$fields}{qw/login remotekey/};
+    $self->return_feeds_as($fields->{return_feeds_as} || 'structure');
 
     return $self;
 }
@@ -115,6 +124,36 @@ Remotekey is a special password valid only for use via API calls.
 A user can get his remotekey here: L<http://friendfeed.com/remotekey>
 
 =cut
+
+sub login {
+    my ($self, $login) = @_;
+
+    if ($login) {
+        $self->{login} = $login;
+    }
+
+    return $self->{login};
+}
+
+sub remotekey {
+    my ($self, $remotekey) = @_;
+
+    if ($remotekey) {
+        $self->{remotekey} = $remotekey;
+    }
+
+    return $self->{remotekey};
+}
+
+sub ua {
+    my ($self, $ua) = @_;
+
+    if ($ua) {
+        $self->{ua} = $ua;
+    }
+
+    return $self->{ua};
+}
 
 sub _connect {
     my $self = shift;
@@ -347,10 +386,13 @@ string scalars.
 sub return_feeds_as {
     my ($self, $format) = @_;
 
-    ($format = lc($format || 'structure')) =~ /^(?:json|structure|xml)\z/
-        or croak "[$format] not supported. Use JSON, XML or structure.\n";
+    if ($format) {
+        ($format = lc($format)) =~ /^(?:json|structure|xml)\z/
+            or croak "[$format] not supported. Use JSON, XML or structure.\n";
+        $self->{return_feeds_as} = $format;
+    }
 
-    return $self->_return_feeds_as_accessor(@_);
+    return $self->{return_feeds_as};
 }
 
 =head2 fetch_public_feed
