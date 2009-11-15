@@ -18,7 +18,8 @@ use Test::Deep;
 use LWP::UserAgent;
 
 my $Http_test_setup;
-my $Mock_ua;
+
+our $DO_REAL_HTTP;  # set to 1 to actually do HTTP
 
 =head1 SYNOPSIS
 
@@ -87,16 +88,21 @@ response.
 sub http_cmp {
     my ($code, $methods, $msg, $resp) = @_;
 
-    $Http_test_setup->($Mock_ua) if $Http_test_setup;
+    my $mock_ua = Test::MockObject::Extends->new(LWP::UserAgent->new);
+    $Http_test_setup->($mock_ua) if $Http_test_setup;
 
-    $Mock_ua->mock(simple_request => sub {
+    my $saved_sr = $mock_ua->can('simple_request');
+    $mock_ua->mock(simple_request => sub {
         cmp_deeply($_[1], methods(@$methods), $msg);
 
-        return $resp || HTTP::Response->new(200, 'Ok',
+        my $real_resp = $saved_sr->(@_)
+            if $DO_REAL_HTTP;
+
+        return $resp || $real_resp || HTTP::Response->new(200, 'Ok',
             [Server => 'mock'], '{"result": "ok"}');    # JSON
     });
 
     $code->();
 }
 
-$Mock_ua = Test::MockObject::Extends->new(LWP::UserAgent->new);
+1;
