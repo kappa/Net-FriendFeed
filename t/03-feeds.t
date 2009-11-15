@@ -50,7 +50,7 @@ http_cmp(sub { $feed_rv = $frf->fetch_public_feed() },
 
 ok(ref $feed_rv, 'ref, probably object returned as feed');
 
-ok($frf->return_feeds_as('xml'), 'set return_feeds_as');
+ok($frf->return_feeds_as('XmL'), 'set return_feeds_as');
 is($frf->return_feeds_as, 'xml', 'return_feeds_as set ok');
 
 ok(
@@ -149,14 +149,12 @@ http_cmp(sub { $frf->fetch_room_feed('ru-friendfeed') },
     ]
 ), 'room feed');
 
-$frf->return_feeds_as('xml&1');
+$frf->return_feeds_as('xml');
 ok(
 http_cmp(sub { $frf->fetch_user_feed('kka?/&+ pp') },
     [
         uri => methods(
             path => re('feed/user/kka%3F%2F%26%2B%20pp$'),
-            ['query_param', 'format'] => 'xml&1',
-            as_string => re('format=xml%261'),
         ),
     ]
 ), 'unsafe data in parameters');
