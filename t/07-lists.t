@@ -3,7 +3,7 @@
 use warnings;
 use strict;
 
-use Test::More qw/no_plan/;
+use Test::More skip_all => 'Lists will be implemented after APIv2';
 use Test::NoWarnings;
 use Test::Deep;
 use Test::MockHTTP;
