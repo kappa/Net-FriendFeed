@@ -6,7 +6,11 @@ author:
 abstract: Perl interface to FriendFeed.com API
 license: gpl
 resources:
-  license: http://www.opensource.org/licenses/gpl-license.php
+  license: http://opensource.org/licenses/gpl-license.php
+build_requires:
+  Test::Deep: 0
+  Test::MockObject: 0
+  Test::NoWarnings: 0
 requires:
   Class::Accessor: 0
   Encode: 0
@@ -15,17 +19,15 @@ requires:
   LWP::UserAgent: 0
   URI: 0
   perl: 5.008
-build_requires:
-  Test::Deep: 0
-  Test::MockObject: 0
-  Test::NoWarnings: 0
+configure_requires:
+  Module::Build: 0.35
 provides:
   Net::FriendFeed:
     file: lib/Net/FriendFeed.pm
     version: 0.99
   Test::MockHTTP:
     file: lib/Test/MockHTTP.pm
-generated_by: Module::Build version 0.2808
+generated_by: Module::Build version 0.35
 meta-spec:
-  url: http://module-build.sourceforge.net/META-spec-v1.2.html
-  version: 1.2
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
