@@ -13,6 +13,7 @@ my $builder = Module::Build->new(
         'Test::Deep' => 0,
         'Test::MockObject' => 0,
         'Test::NoWarnings' => 0,
+        'Test::Exception'  => 0,
     },
     requires => {
         'perl' => '5.008',

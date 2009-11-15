@@ -93,10 +93,10 @@ sub new {
 
     $fields = {} unless defined $fields;
 
-    my $self = { %$fields };
-    $self->{return_feeds_as} ||= 'structure';
+    my $self = bless { %$fields }, $class;
+    $self->return_feeds_as($fields->{return_feeds_as});
 
-    bless $self, $class;
+    return $self;
 }
 
 =head2 login([$login])
@@ -244,13 +244,10 @@ sub list_services {
 =head1 FEED FUNCTIONS
 
 A number of methods fetch arrays of data or "feeds" from FriendFeed.
-All feeds are available in four different formats. They are
-C<json>, C<xml>, C<atom> and C<rss>. JSON and XML formats are custom
-FriendFeed structures, while Atom and RSS are standard XML formats
-with all FriendFeed specific features represented as custom XML tags.
+All feeds are available in two different formats: JSON and XML.
 
 Net::FriendFeed adds one additional format called C<structure> which
-means the feeds will be fetched as C<json> and then deserialized into
+means the feeds will be fetched as C<JSON> and then deserialized into
 Perl structures using JSON.pm module. The format C<structure> is set by
 default.
 
@@ -307,9 +304,9 @@ The feeds have the following structure (JSON-like notation is used):
                 + nickname - the room's FriendFeed nickname, used in FriendFeed URLs
                 + url - the room's URL on FriendFeed
 
-The simple XML format has the same structure as the JSON. The RSS and Atom formats use the standard RSS and Atom attributes for title, link, published, and updated, and include extension elements for all of the other meta-data.
+The simple XML format has the same structure as the JSON.
 
-Dates in JSON and dates in the FriendFeed extension elements in the Atom and RSS feeds are in RFC 3339 format in UTC. You can parse them with the strptime string "%Y-%m-%dT%H:%M:%SZ".
+Dates in JSON are in RFC 3339 format in UTC. You can parse them with the strptime string "%Y-%m-%dT%H:%M:%SZ".
 
 All feed-fetching methods support additional parameters:
 
@@ -339,11 +336,20 @@ They can be passed as key => value pairs after all the other arguments.
 
 Gets or sets the type of return feeds.
 
-This can be one of C<qw/structure xml atom rss json/> and defaults to
+This can be one of C<qw/structure xml json/> and defaults to
 C<'structure'> which is a parsed Perl data structure. Other types are
 string scalars.
 
 =cut
+
+sub return_feeds_as {
+    my ($self, $format) = @_;
+
+    ($format = lc($format || 'structure')) =~ /^(?:json|structure|xml)\z/
+        or croak "[$format] not supported. Use JSON, XML or structure.\n";
+
+    return $self->_return_feeds_as_accessor(@_);
+}
 
 =head2 fetch_public_feed
 

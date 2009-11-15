@@ -20,9 +20,9 @@ $frf = Net::FriendFeed->new({ login => 'kkapp', remotekey => 'shlyappa' });
 is($frf->login, 'kkapp', 'login set from constructor');
 ok($frf->_has_auth, 'auth from the start');
 
-my $frf1 = $frf->new({ return_feeds_as => 'rss' });
-isa_ok($frf1, 'Net::FriendFeed', '$obj->constructor workds');
-is($frf1->return_feeds_as, 'rss', 'init feeds type from constructor');
+my $frf1 = $frf->new({ return_feeds_as => 'xml' });
+isa_ok($frf1, 'Net::FriendFeed', '$obj->constructor works');
+is($frf1->return_feeds_as, 'xml', 'init feeds type from constructor');
 
 http_test_setup { $frf->ua($_[0]) };
 
