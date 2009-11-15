@@ -88,6 +88,16 @@ These error codes are generated inside Net::FriendFeed wrapper code:
 
 =cut
 
+sub last_error {
+    my ($self, $last_error) = @_;
+
+    if ($last_error) {
+        $self->{last_error} = $last_error;
+    }
+
+    return $self->{last_error};
+}
+
 sub new {
     my ($proto, @opts) = @_;
     my $class = ref $proto || $proto;
@@ -160,7 +170,7 @@ sub _connect {
 
     unless ($self->ua) {
         $self->ua(new LWP::UserAgent)
-            or die;
+            or croak;
     }
 }
 
@@ -223,11 +233,12 @@ sub _http_req {
 
     if ($Last_Http_Response = $self->ua->request($req)) {
         unless ($Last_Http_Response->is_success) {
-            require JSON;       # should die if absent
+            require JSON;       # should die if absent XXX
             JSON->VERSION(2.0); # we need newer JSON
             # do some JSON magic
             $self->last_error(
                 JSON::from_json($Last_Http_Response->content, { utf8 => 1})->{errorCode}
+                # XXX will die on bad JSON
             );
             return;
         }
@@ -238,10 +249,11 @@ sub _http_req {
     }
 
     if ($needs_parsing) {
-        require JSON;       # should die if absent
+        require JSON;       # should die if absent XXX
         JSON->VERSION(2.0); # we need newer JSON
         # do some JSON magic
         return JSON::from_json($Last_Http_Response->content, { utf8 => 1});
+        # XXX will die on bad JSON
     }
     else {
         return $Last_Http_Response->content;
@@ -600,7 +612,7 @@ please let us know in the developer forum.
 
 =head2 publish($message) OR publish(named params)
 
-Post a message with a title, images, audios and other possible options.
+Post an entry with a body, images, audios and other possible options.
 Requires authentication.
 
 All non-ASCII input data should be clean Perl Unicode (that is, decoded from
@@ -612,11 +624,11 @@ A call looks like this:
 
     $frf->publish(
         message => 'Message test',
-        link    => 'http://link.example.com,
+        link    => 'http://link.example.com',
         images  => [ @images ],
         audios  => [ @audios ],
+        files   => [ @files ],
         room    => 'Room 1',
-        via     => 'Perl!',
         comment => 'Hi there',
     );
 
@@ -626,7 +638,7 @@ The parameters are:
 
 =item message
 
-Mandatory title of the posted item.
+Mandatory body of the posted entry.
 
 =item link
 
@@ -638,31 +650,28 @@ Automatically add first comment to the item.
 
 =item images
 
-This one is an arrayref of image items. Each image item is either an image PURL (path-or-URL) or a
-pair (taken as arrayrefs of two elements) of PURL => URL. PURL in the
-pair points to the image and URL is used as a href to follow when the
-user clicks on this very image. URL defaults to the main link.
-
-Each PURL may be either an (http|https|ftp) URL or a PATH to a local
-file in which case that file gets uploaded directly to FriendFeed.
+This one is an arrayref of image items. Each image item is either an image URL
+or a path to a local file. FriendFeed will either download the image
+or accept the uploaded file, then create a thumbnail and show it
+alongside the entry.
 
 =item audios
 
-This one is an arrayref of audio items. Each audio item is either an audio URL or a
-pair (taken as arrayrefs of two elements) of URL => title. URL in the
-pair points to the audio and title is shown near the audio player on
-FriendFeed pages.
+This one is an arrayref of audio items. Each audio item is an URL of
+an MP3 file. FriendFeed will show a small Flash player alongside the
+entry.
 
-FriendFeed supports only MP3 audios.
+=item files
+
+This one is an arrayref of file items. Each file item is a path to a
+local file that will be uploaded to FriendFeed and shown right inside
+the entry as a downloadable link.
 
 =item room
 
-This is a room nickname to which the post should be published.
+=item to
 
-=item via
-
-This is an identifier of your software. It's ignored unless you
-register it with FriendFeed administration.
+This is a group XXX
 
 =back
 
@@ -674,36 +683,28 @@ sub publish {
 
     my @args = ();
 
-    push @args, title => Encode::encode('UTF-8', $args{message});
+    push @args, body => Encode::encode('UTF-8', $args{message});
     push @args, 'link' => $args{link} if defined $args{link};
     push @args, comment => Encode::encode('UTF-8', $args{comment}) if defined $args{comment};
-    push @args, room => $args{room} if defined $args{room};
-    push @args, via => $args{via} if defined $args{via};
+    my $to = '' || defined $args{room} && $args{room};
+    if ($args{to}) {
+        $to .= ',' if $to ne '';
+        $to .= ref $args{to} eq 'ARRAY' ? join(',', @{$args{to}}) : $args{to};
+    }
+
+    push @args, to => $to || 'me';
 
     my $multipart;
 
     my $imgs = $args{images};
     if ($imgs && ref $imgs eq 'ARRAY') {
         foreach (0 .. $#$imgs) {
-            if (ref $imgs->[$_]) { # image AND link
-
-                if ($imgs->[$_]->[0] =~ m{^(?:http|https|ftp)://}) { # remote image
-                    push @args, ("image${_}_url" => $imgs->[$_]->[0], "image${_}_link" => $imgs->[$_]->[1]);
-                }
-                else {
-                    $multipart = 1;
-                    my $filename = (File::Spec->splitpath($imgs->[$_]->[0]))[2]; # kinda basename
-                    push @args, ("image${_}" => [$imgs->[$_]->[0], $filename], "${filename}_link" => $imgs->[$_]->[1]);
-                }
+            if ($imgs->[$_] =~ m{^(?:http|https|ftp)://}) { # remote image
+                push @args, ("image_url" => $imgs->[$_]);
             }
             else {
-                if ($imgs->[$_] =~ m{^(?:http|https|ftp)://}) { # remote image
-                    push @args, ("image${_}_url" => $imgs->[$_]);
-                }
-                else {
-                    $multipart = 1;
-                    push @args, ("image${_}" => [$imgs->[$_]]);
-                }
+                $multipart = 1;
+                push @args, ('file' => [$imgs->[$_]]);
             }
         }
     }
@@ -711,20 +712,23 @@ sub publish {
     my $audios = $args{audios};
     if ($audios && ref $audios eq 'ARRAY') {
         foreach (0 .. $#$audios) {
-            if (ref $audios->[$_]) { # mp3 AND title
-                push @args, ("audio${_}_url" => $audios->[$_]->[0], "audio${_}_title" => Encode::encode('UTF-8', $audios->[$_]->[1]));
-            }
-            else {
-                push @args, ("audio${_}_url" => $audios->[$_]);
-            }
+            push @args, ("audio_url" => $audios->[$_]);
         }
     }
 
-    $self->_post('share', Content => \@args,
+    my $files = $args{files};
+    if ($files && ref $files eq 'ARRAY') {
+        foreach (0 .. $#$files) {
+            $multipart = 1;
+            push @args, ('file' => [$files->[$_]]);
+        }
+    }
+
+    $self->_post('entry', Content => \@args,
         $multipart ? (Content_Type => 'form-data') : ());
 }
 
-=head2 publish_link($title, $link, $comment, [@images, [$imgN, $linkN]], $room, $via)
+=head2 publish_link($title, $link, $comment, [@images, [$imgN, $linkN]], $room)
 
 I<This method is obsolete, use C<publish>>.
 
@@ -736,7 +740,7 @@ any encoding). FriendFeed API is strictly UTF-8 so we unconditionally
 encode strings into UTF-8 via Encode::encode('UTF-8', $data) call.
 
 Full signature looks like: 
-    $frf->publish_link($title, $link, $comment, [@images, [$imgN, $linkN]], $room, $via)
+    $frf->publish_link($title, $link, $comment, [@images, [$imgN, $linkN]], $room)
 
 =over
 
