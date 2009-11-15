@@ -25,8 +25,8 @@ lives_ok { $frf = Net::FriendFeed->new({login => 'kkapp', remotekey => 'shlyappa
     'hashref call does not die';
 ok($frf, 'hashref call creates object');
 
-throws_ok { Net::FriendFeed->new(1,2,3) } qr/Incorrect/, 'Odd
-    number of arguments to new';
+throws_ok { Net::FriendFeed->new(1,2,3) } qr/Incorrect/,
+    'Odd number of arguments to new';
 
 my $frf1 = $frf->new({ return_feeds_as => 'xml' });
 isa_ok($frf1, 'Net::FriendFeed', '$obj->constructor works');
@@ -41,5 +41,5 @@ http_cmp(sub { $frf->list_services() },
         uri => methods(
             as_string => re('/services$'),
         ),
-    ]
+    ], 'list services req'
 ), 'list services');
