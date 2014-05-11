@@ -18,6 +18,12 @@ WriteMakefile
                          },
           'INSTALLDIRS' => 'site',
           'EXE_FILES' => [],
-          'PL_FILES' => {}
+          'PL_FILES' => {},
+          'META_MERGE' => {
+                            'resources'  => {
+                                              'homepage' => 'https://github.com/kappa/Net-FriendFeed',
+                                              'repository' => 'git@github.com:kappa/Net-FriendFeed.git',
+                                            },
+                          },
         )
 ;
