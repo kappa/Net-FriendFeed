@@ -184,6 +184,9 @@ sub _has_auth {
 
 Validates the current combination of login and remotekey.
 
+Returns hashref with user data if the combination is currect or returns
+undef. 
+
 =cut
 
 sub validate {
