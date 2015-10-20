@@ -1,8 +1,13 @@
-Net::FriendFeed
-
 This module provides Perl wrapper around FriendFeed.com API.
 
-FriendFeed is a social feed aggregator. See for yourself.
+FriendFeed.com was closed by Facebook on April 9, 2015.
+See
+http://blog.friendfeed.com/2015/04/friendfeed-was-shut-down-on-april-9-2015.html
+
+This code is kept online as a historical artifact. It may also be used
+as a reference implementing the original FriendFeed API.
+
+FriendFeed was a social feed aggregator.
 
 The API provides calls to fetch different feeds, to publish data, to
 comment and "like" entries and to get user profile information.
